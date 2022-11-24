@@ -1,3 +1,4 @@
+import '../assets/css/style.css'
 import BgGradient1 from "../assets/images/backgroup-secsion/bg-gradient1.png";
 import BgGradient2 from "../assets/images/backgroup-secsion/bg-gradient2.png";
 import BgGradient3 from "../assets/images/backgroup-secsion/bg-gradient3.png";
@@ -70,7 +71,7 @@ function Header() {
                                                     <span>Monster NFTs</span>
                                                 </h1>
                                                 <p className="sub-heading mg-t-29 mg-bt-50">Marketplace for monster
-                                                    character cllections non fungible token NFTs
+                                                    character collections non fungible token NFTs
                                                 </p>
                                                 <div className="flat-bt-slider flex">
                                                     <a
