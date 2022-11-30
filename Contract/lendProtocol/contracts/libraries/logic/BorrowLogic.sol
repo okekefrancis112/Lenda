@@ -52,7 +52,7 @@ library BorrowLogic {
     uint256 nftTokenId,
     address indexed onBehalfOf,
     uint256 borrowRate,
-    uint256 loanId,
+    uint256 loanId
   );
 
   /**
@@ -154,7 +154,7 @@ library BorrowLogic {
   ) internal {
     require(
       params.onBehalfOf != address(0),
-      Errors.VL_INVALID_ONBEHALFOF_ADDRESS
+      "VL_INVALID_ONBEHALFOF_ADDRESS"
     );
 
     ExecuteBorrowLocalVars memory vars;
@@ -180,11 +180,11 @@ library BorrowLogic {
       .totalSupply();
     require(
       vars.totalSupply <= nftData.maxSupply,
-      Errors.LP_NFT_SUPPLY_NUM_EXCEED_MAX_LIMIT
+      "LP_NFT_SUPPLY_NUM_EXCEED_MAX_LIMIT"
     );
     require(
       params.nftTokenId <= nftData.maxTokenId,
-      Errors.LP_NFT_TOKEN_ID_EXCEED_MAX_LIMIT
+      "LP_NFT_TOKEN_ID_EXCEED_MAX_LIMIT"
     );
 
     ValidationLogic.validateBorrow(
@@ -342,7 +342,7 @@ library BorrowLogic {
       params.nftAsset,
       params.nftTokenId
     );
-    require(vars.loanId != 0, Errors.LP_NFT_IS_NOT_USED_AS_COLLATERAL);
+    require(vars.loanId != 0, "LP_NFT_IS_NOT_USED_AS_COLLATERAL");
 
     DataTypes.LoanData memory loanData = ILendPoolLoan(vars.poolLoan).getLoan(
       vars.loanId

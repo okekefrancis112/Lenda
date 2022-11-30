@@ -10,13 +10,12 @@ import { IncentivizedERC20 } from "./IncentivizedERC20.sol";
 import { WadRayMath } from "../libraries/math/WadRayMath.sol";
 import { Errors } from "../libraries/helpers/Errors.sol";
 
-import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @title DebtToken
  * @notice Implements a debt token to track the borrowing positions of users
  **/
-contract DebtToken is Initializable, IDebtToken, IncentivizedERC20 {
+contract DebtToken is  IDebtToken, IncentivizedERC20 {
   using WadRayMath for uint256;
 
   ILendPoolAddressesProvider internal _addressProvider;

@@ -1,34 +1,8 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.8.4;
+pragma solidity ^0.8.0;
 
-import { ILendPoolLoan } from "../interfaces/ILendPoolLoan.sol";
-import { ILendPool } from "../interfaces/ILendPool.sol";
-import { ILendPoolAddressesProvider } from "../interfaces/ILendPoolAddressesProvider.sol";
-
-import { Errors } from "../libraries/helpers/Errors.sol";
-import { WadRayMath } from "../libraries/math/WadRayMath.sol";
-import { GenericLogic } from "../libraries/logic/GenericLogic.sol";
-import { PercentageMath } from "../libraries/math/PercentageMath.sol";
-import { ReserveLogic } from "../libraries/logic/ReserveLogic.sol";
-import { NftLogic } from "../libraries/logic/NftLogic.sol";
-import { ValidationLogic } from "../libraries/logic/ValidationLogic.sol";
-import { SupplyLogic } from "../libraries/logic/SupplyLogic.sol";
-import { BorrowLogic } from "../libraries/logic/BorrowLogic.sol";
-import { LiquidateLogic } from "../libraries/logic/LiquidateLogic.sol";
-
-import { ReserveConfiguration } from "../libraries/configuration/ReserveConfiguration.sol";
-import { NftConfiguration } from "../libraries/configuration/NftConfiguration.sol";
-import { DataTypes } from "../libraries/types/DataTypes.sol";
-import { LendPoolStorage } from "./LendPoolStorage.sol";
-import { LendPoolStorageExt } from "./LendPoolStorageExt.sol";
-
-import { AddressUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-import { IERC721ReceiverUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
-import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import "abdk-libraries-solidity/ABDKMath64x64.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /**
  * @title LendPool contract
@@ -37,970 +11,372 @@ import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Co
  *   # Deposit
  *   # Withdraw
  *   # Borrow
- *   # Repay
- *   # Auction
- *   # Liquidate
- * - To be covered by a proxy contract, owned by the LendPoolAddressesProvider of the specific market
- * - All admin functions are callable by the LendPoolConfigurator contract defined also in the
- *   LendPoolAddressesProvider
- **/
-// !!! For Upgradable: DO NOT ADJUST Inheritance Order !!!
-contract LendPool is
-  Initializable,
-  ILendPool,
-  LendPoolStorage,
-  ContextUpgradeable,
-  IERC721ReceiverUpgradeable,
-  LendPoolStorageExt
-{
-  using WadRayMath for uint256;
-  using PercentageMath for uint256;
-  using SafeERC20Upgradeable for IERC20Upgradeable;
-  using ReserveLogic for DataTypes.ReserveData;
-  using NftLogic for DataTypes.NftData;
-  using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-  using NftConfiguration for DataTypes.NftConfigurationMap;
-
-  /**
-   * @dev Prevents a contract from calling itself, directly or indirectly.
-   * Calling a `nonReentrant` function from another `nonReentrant`
-   * function is not supported. It is possible to prevent this from happening
-   * by making the `nonReentrant` function external, and making it call a
-   * `private` function that does the actual work.
-   */
-  modifier nonReentrant() {
-    // On the first call to nonReentrant, _notEntered will be true
-    require(_status != _ENTERED, "ReentrancyGuard: reentrant call");
-
-    // Any calls to nonReentrant after this point will fail
-    _status = _ENTERED;
-
-    _;
-
-    // By storing the original value once again, a refund is triggered (see
-    // https://eips.ethereum.org/EIPS/eip-2200)
-    _status = _NOT_ENTERED;
-  }
-
-  modifier whenNotPaused() {
-    _whenNotPaused();
+ * @dev Completed loans are represented as tokenOwner = 0x0 to prevent
+ *      errors w.r.t stack too deep (too large of a struct to include a bool)
+ * @dev Unlike original spec., lenders are paid for only active duration (D')
+ */
+contract LendPool {
+  modifier onlyOwner() {
+    require(msg.sender == owner, "only owner can call bozo");
     _;
   }
-
-  modifier onlyLendPoolConfigurator() {
-    _onlyLendPoolConfigurator();
-    _;
+  // ============ Structs ============
+  struct Loan {
+    // NFT token address
+    address tokenAddress;
+    // NFT token owner (loan initiator or 0x0 for repaid)
+    address tokenOwner;
+    // Current top lender/bidder
+    address lender;
+    // NFT token id
+    uint256 tokenId;
+    // Fixed interest rate
+    uint256 interestRate;
+    // Current max bid
+    uint256 loanAmount;
+    // Maximum bid
+    uint256 maxLoanAmount;
+    // Current loan utilization
+    uint256 loanAmountDrawn;
+    // Timestamp of first bid
+    uint256 firstBidTime;
+    // Timestamp of last bid
+    uint256 lastBidTime;
+    // Interest paid by top bidder, thus far
+    uint256 historicInterest;
+    // Timestamp of loan completion
+    uint256 loanCompleteTime;
   }
 
-  function _whenNotPaused() internal view {
-    require(!_paused, Errors.LP_IS_PAUSED);
-  }
+  // ============ Mutable storage ============
 
-  function _onlyLendPoolConfigurator() internal view {
-    require(
-      _addressesProvider.getLendPoolConfigurator() == _msgSender(),
-      "LP_CALLER_NOT_LEND_POOL_CONFIGURATOR"
-    );
-  }
+  // Number of loans issued
+  uint256 public numLoans;
+  // Mapping of loan number to loan struct
+  mapping(uint256 => Loan) public Loans;
 
-  /**
-   * @dev Function is invoked by the proxy contract when the LendPool contract is added to the
-   * LendPoolAddressesProvider of the market.
-   * - Caching the address of the LendPoolAddressesProvider in order to reduce gas consumption
-   *   on subsequent operations
-   * @param provider The address of the LendPoolAddressesProvider
-   **/
-  //* max number of reserves are 32, max number of NFTs are 256
-  function initialize(ILendPoolAddressesProvider provider) public initializer {
-    _maxNumberOfReserves = 32;
-    _maxNumberOfNfts = 256;
+  // ============ Events ============
 
-    _addressesProvider = provider;
-  }
-
-  /**
-   * @dev Deposits an `amount` of underlying asset into the reserve, receiving in return overlying bTokens.
-   * - E.g. User deposits 100 USDC and gets in return 100 bUSDC
-   * @param asset The address of the underlying asset to deposit
-   * @param amount The amount to be deposited
-   * @param onBehalfOf The address that will receive the bTokens, same as msg.sender if the user
-   *   wants to receive them on his own wallet, or a different address if the beneficiary of bTokens
-   *   is a different wallet
-   *   0 if the action is executed directly by the user, without any middle-man
-   **/
-  function deposit(
-    address asset,
-    uint256 amount,
-    address onBehalfOf,
-    uint16 referralCode
-  ) external override nonReentrant whenNotPaused {
-    SupplyLogic.executeDeposit(
-      _reserves,
-      DataTypes.ExecuteDepositParams({
-        initiator: _msgSender(),
-        asset: asset,
-        amount: amount,
-        onBehalfOf: onBehalfOf
-      })
-    );
-  }
-
-  /**
-   * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent bTokens owned
-   * E.g. User has 100 bUSDC, calls withdraw() and receives 100 USDC, burning the 100 bUSDC
-   * @param asset The address of the underlying asset to withdraw
-   * @param amount The underlying amount to be withdrawn
-   *   - Send the value type(uint256).max in order to withdraw the whole bToken balance
-   * @param to Address that will receive the underlying, same as msg.sender if the user
-   *   wants to receive it on his own wallet, or a different address if the beneficiary is a
-   *   different wallet
-   * @return The final amount withdrawn
-   **/
-  function withdraw(
-    address asset,
-    uint256 amount,
-    address to
-  ) external override nonReentrant whenNotPaused returns (uint256) {
-    return
-      SupplyLogic.executeWithdraw(
-        _reserves,
-        DataTypes.ExecuteWithdrawParams({
-          initiator: _msgSender(),
-          asset: asset,
-          amount: amount,
-          to: to
-        })
-      );
-  }
-
-  /**
-   * @dev Allows users to borrow a specific `amount` of the reserve underlying asset
-   * - E.g. User borrows 100 USDC, receiving the 100 USDC in his wallet
-   *   and lock collateral asset in contract
-   * @param asset The address of the underlying asset to borrow
-   * @param amount The amount to be borrowed
-   * @param nftAsset The address of the underlying nft used as collateral
-   * @param nftTokenId The token ID of the underlying nft used as collateral
-   * @param onBehalfOf Address of the user who will receive the loan. Should be the address of the borrower itself
-   * calling the function if he wants to borrow against his own collateral
-   *   0 if the action is executed directly by the user, without any middle-man
-   **/
-  function borrow(
-    address asset,
-    uint256 amount,
-    address nftAsset,
-    uint256 nftTokenId,
-    address onBehalfOf,
-  ) external override nonReentrant whenNotPaused {
-    BorrowLogic.executeBorrow(
-      _addressesProvider,
-      _reserves,
-      _nfts,
-      DataTypes.ExecuteBorrowParams({
-        initiator: _msgSender(),
-        asset: asset,
-        amount: amount,
-        nftAsset: nftAsset,
-        nftTokenId: nftTokenId,
-        onBehalfOf: onBehalfOf,
-      })
-    );
-  }
-
-  function batchBorrow(
-    address[] calldata assets,
-    uint256[] calldata amounts,
-    address[] calldata nftAssets,
-    uint256[] calldata nftTokenIds,
-    address onBehalfOf,
-  ) external override nonReentrant whenNotPaused {
-    DataTypes.ExecuteBatchBorrowParams memory params;
-    params.initiator = _msgSender();
-    params.assets = assets;
-    params.amounts = amounts;
-    params.nftAssets = nftAssets;
-    params.nftTokenIds = nftTokenIds;
-    params.onBehalfOf = onBehalfOf;
-
-    BorrowLogic.executeBatchBorrow(
-      _addressesProvider,
-      _reserves,
-      _nfts,
-      params
-    );
-  }
-
-  /**
-   * @notice Repays a borrowed `amount` on a specific reserve, burning the equivalent loan owned
-   * - E.g. User repays 100 USDC, burning loan and receives collateral asset
-   * @param nftAsset The address of the underlying NFT used as collateral
-   * @param nftTokenId The token ID of the underlying NFT used as collateral
-   * @param amount The amount to repay
-   **/
-  function repay(
-    address nftAsset,
-    uint256 nftTokenId,
-    uint256 amount
-  ) external override nonReentrant whenNotPaused returns (uint256, bool) {
-    return
-      BorrowLogic.executeRepay(
-        _addressesProvider,
-        _reserves,
-        _nfts,
-        DataTypes.ExecuteRepayParams({
-          initiator: _msgSender(),
-          nftAsset: nftAsset,
-          nftTokenId: nftTokenId,
-          amount: amount
-        })
-      );
-  }
-
-  function batchRepay(
-    address[] calldata nftAssets,
-    uint256[] calldata nftTokenIds,
-    uint256[] calldata amounts
-  )
-    external
-    override
-    nonReentrant
-    whenNotPaused
-    returns (uint256[] memory, bool[] memory)
-  {
-    return
-      BorrowLogic.executeBatchRepay(
-        _addressesProvider,
-        _reserves,
-        _nfts,
-        DataTypes.ExecuteBatchRepayParams({
-          initiator: _msgSender(),
-          nftAssets: nftAssets,
-          nftTokenIds: nftTokenIds,
-          amounts: amounts
-        })
-      );
-  }
-
-  /**
-   * @dev Function to auction a non-healthy position collateral-wise
-   * - The bidder want to buy collateral asset of the user getting liquidated
-   * @param nftAsset The address of the underlying NFT used as collateral
-   * @param nftTokenId The token ID of the underlying NFT used as collateral
-   * @param bidPrice The bid price of the bidder want to buy underlying NFT
-   * @param onBehalfOf Address of the user who will get the underlying NFT, same as msg.sender if the user
-   *   wants to receive them on his own wallet, or a different address if the beneficiary of NFT
-   *   is a different wallet
-   **/
-  function auction(
-    address nftAsset,
-    uint256 nftTokenId,
-    uint256 bidPrice,
-    address onBehalfOf
-  ) external override nonReentrant whenNotPaused {
-    LiquidateLogic.executeAuction(
-      _addressesProvider,
-      _reserves,
-      _nfts,
-      _buildLendPoolVars(),
-      DataTypes.ExecuteAuctionParams({
-        initiator: _msgSender(),
-        nftAsset: nftAsset,
-        nftTokenId: nftTokenId,
-        bidPrice: bidPrice,
-        onBehalfOf: onBehalfOf
-      })
-    );
-  }
-
-  /**
-   * @notice Redeem a NFT loan which state is in Auction
-   * - E.g. User repays 100 USDC, burning loan and receives collateral asset
-   * @param nftAsset The address of the underlying NFT used as collateral
-   * @param nftTokenId The token ID of the underlying NFT used as collateral
-   * @param amount The amount to repay the debt
-   * @param bidFine The amount of bid fine
-   **/
-  function redeem(
-    address nftAsset,
-    uint256 nftTokenId,
-    uint256 amount,
-    uint256 bidFine
-  ) external override nonReentrant whenNotPaused returns (uint256) {
-    return
-      LiquidateLogic.executeRedeem(
-        _addressesProvider,
-        _reserves,
-        _nfts,
-        _buildLendPoolVars(),
-        DataTypes.ExecuteRedeemParams({
-          initiator: _msgSender(),
-          nftAsset: nftAsset,
-          nftTokenId: nftTokenId,
-          amount: amount,
-          bidFine: bidFine
-        })
-      );
-  }
-
-  /**
-   * @dev Function to liquidate a non-healthy position collateral-wise
-   * - The caller (liquidator) buy collateral asset of the user getting liquidated, and receives
-   *   the collateral asset
-   * @param nftAsset The address of the underlying NFT used as collateral
-   * @param nftTokenId The token ID of the underlying NFT used as collateral
-   **/
-  function liquidate(
-    address nftAsset,
-    uint256 nftTokenId,
-    uint256 amount
-  ) external override nonReentrant whenNotPaused returns (uint256) {
-    return
-      LiquidateLogic.executeLiquidate(
-        _addressesProvider,
-        _reserves,
-        _nfts,
-        _buildLendPoolVars(),
-        DataTypes.ExecuteLiquidateParams({
-          initiator: _msgSender(),
-          nftAsset: nftAsset,
-          nftTokenId: nftTokenId,
-          amount: amount
-        })
-      );
-  }
-
-  function onERC721Received(
-    address operator,
-    address from,
+  // Loan creation event with indexed NFT owner
+  event LoanCreated(
+    uint256 id,
+    address indexed owner,
+    address tokenAddress,
     uint256 tokenId,
-    bytes calldata data
-  ) external pure override returns (bytes4) {
-    operator;
-    from;
-    tokenId;
-    data;
-    return IERC721ReceiverUpgradeable.onERC721Received.selector;
-  }
+    uint256 maxLoanAmount,
+    uint256 loanCompleteTime
+  );
+  // New loan lender/bidder
+  event LoanUnderwritten(uint256 id, address lender);
+  // Loan drawn by NFT owner
+  event LoanDrawn(uint256 id);
+  // Loan repayed by address
+  event LoanRepayed(uint256 id, address lender, address repayer);
+  // Loan cancelled by NFT owner
+  event LoanCancelled(uint256 id);
+  // NFT seized by lender
+  event LoanSeized(uint256 id, address lender, address caller);
+
+  // ============ Functions ============
 
   /**
-   * @dev Returns the configuration of the NFT
-   * @param asset The address of the asset of the NFT
-   * @return The configuration of the NFT
-   **/
-  function getNftConfiguration(address asset)
-    external
-    view
-    override
-    returns (DataTypes.NftConfigurationMap memory)
-  {
-    return _nfts[asset].configuration;
-  }
+   * Enables an NFT owner to create a loan, specifying parameters
+   * @param _tokenAddress NFT token address
+   * @param _tokenId NFT token id
+   * @param _interestRate percentage fixed interest rate for period
+   * @param _maxLoanAmount maximum allowed Ether bid
+   * @param _loanCompleteTime time of loan completion
+   * @return Loan id
+   */
+  function createLoan(
+    address _tokenAddress,
+    uint256 _tokenId,
+    uint256 _interestRate,
+    uint256 _maxLoanAmount,
+    uint256 _loanCompleteTime
+  ) external returns (uint256) {
+    // Enforce creating future-dated loan
+    require(_loanCompleteTime > block.timestamp, "Can't create loan in past");
 
-  /**
-   * @dev Returns the state and configuration of the reserve
-   * @param asset The address of the underlying asset of the reserve
-   * @return The state of the reserve
-   **/
-  function getReserveData(address asset)
-    external
-    view
-    override
-    returns (DataTypes.ReserveData memory)
-  {
-    return _reserves[asset];
-  }
+    // NFT id
+    uint256 loanId = ++numLoans;
 
-  /**
-   * @dev Returns the state and configuration of the nft
-   * @param asset The address of the underlying asset of the nft
-   * @return The state of the nft
-   **/
-  function getNftData(address asset)
-    external
-    view
-    override
-    returns (DataTypes.NftData memory)
-  {
-    return _nfts[asset];
-  }
+    // Transfer NFT from owner to contract
+    IERC721(_tokenAddress).transferFrom(msg.sender, address(this), _tokenId);
 
-  /**
-   * @dev Returns the loan data of the NFT
-   * @param nftAsset The address of the NFT
-   * @param reserveAsset The address of the Reserve
-   * @return totalCollateralInETH the total collateral in ETH of the NFT
-   * @return totalCollateralInReserve the total collateral in Reserve of the NFT
-   * @return availableBorrowsInETH the borrowing power in ETH of the NFT
-   * @return availableBorrowsInReserve the borrowing power in Reserve of the NFT
-   * @return ltv the loan to value of the user
-   * @return liquidationThreshold the liquidation threshold of the NFT
-   * @return liquidationBonus the liquidation bonus of the NFT
-   **/
-  function getNftCollateralData(address nftAsset, address reserveAsset)
-    external
-    view
-    override
-    returns (
-      uint256 totalCollateralInETH,
-      uint256 totalCollateralInReserve,
-      uint256 availableBorrowsInETH,
-      uint256 availableBorrowsInReserve,
-      uint256 ltv,
-      uint256 liquidationThreshold,
-      uint256 liquidationBonus
-    )
-  {
-    DataTypes.NftData storage nftData = _nfts[nftAsset];
+    // Create loan
+    Loans[loanId].tokenAddress = _tokenAddress;
+    Loans[loanId].tokenOwner = msg.sender;
+    Loans[loanId].tokenId = _tokenId;
+    Loans[loanId].interestRate = _interestRate;
+    Loans[loanId].maxLoanAmount = _maxLoanAmount;
+    Loans[loanId].loanCompleteTime = _loanCompleteTime;
 
-    DataTypes.ReserveData storage reserveData = _reserves[reserveAsset];
-
-    (ltv, liquidationThreshold, liquidationBonus) = nftData
-      .configuration
-      .getCollateralParams();
-
-    (totalCollateralInETH, totalCollateralInReserve) = GenericLogic
-      .calculateNftCollateralData(
-        reserveAsset,
-        reserveData,
-        nftAsset,
-        nftData,
-        _addressesProvider.getReserveOracle(),
-        _addressesProvider.getNFTOracle()
-      );
-
-    availableBorrowsInETH = GenericLogic.calculateAvailableBorrows(
-      totalCollateralInETH,
-      0,
-      ltv
-    );
-    availableBorrowsInReserve = GenericLogic.calculateAvailableBorrows(
-      totalCollateralInReserve,
-      0,
-      ltv
-    );
-  }
-
-  /**
-   * @dev Returns the debt data of the NFT
-   * @param nftAsset The address of the NFT
-   * @param nftTokenId The token id of the NFT
-   * @return loanId the loan id of the NFT
-   * @return reserveAsset the address of the Reserve
-   * @return totalCollateral the total power of the NFT
-   * @return totalDebt the total debt of the NFT
-   * @return availableBorrows the borrowing power left of the NFT
-   * @return healthFactor the current health factor of the NFT
-   **/
-  function getNftDebtData(address nftAsset, uint256 nftTokenId)
-    external
-    view
-    override
-    returns (
-      uint256 loanId,
-      address reserveAsset,
-      uint256 totalCollateral,
-      uint256 totalDebt,
-      uint256 availableBorrows,
-      uint256 healthFactor
-    )
-  {
-    DataTypes.NftData storage nftData = _nfts[nftAsset];
-
-    (uint256 ltv, uint256 liquidationThreshold, ) = nftData
-      .configuration
-      .getCollateralParams();
-
-    loanId = ILendPoolLoan(_addressesProvider.getLendPoolLoan())
-      .getCollateralLoanId(nftAsset, nftTokenId);
-    if (loanId == 0) {
-      return (0, address(0), 0, 0, 0, 0);
-    }
-
-    DataTypes.LoanData memory loan = ILendPoolLoan(
-      _addressesProvider.getLendPoolLoan()
-    ).getLoan(loanId);
-
-    reserveAsset = loan.reserveAsset;
-    DataTypes.ReserveData storage reserveData = _reserves[reserveAsset];
-
-    (, totalCollateral) = GenericLogic.calculateNftCollateralData(
-      reserveAsset,
-      reserveData,
-      nftAsset,
-      nftData,
-      _addressesProvider.getReserveOracle(),
-      _addressesProvider.getNFTOracle()
-    );
-
-    (, totalDebt) = GenericLogic.calculateNftDebtData(
-      reserveAsset,
-      reserveData,
-      _addressesProvider.getLendPoolLoan(),
+    // Emit creation event
+    emit LoanCreated(
       loanId,
-      _addressesProvider.getReserveOracle()
+      msg.sender,
+      _tokenAddress,
+      _tokenId,
+      _maxLoanAmount,
+      _loanCompleteTime
     );
 
-    availableBorrows = GenericLogic.calculateAvailableBorrows(
-      totalCollateral,
-      totalDebt,
-      ltv
+    // Return loan id
+    return loanId;
+  }
+
+  /**
+   * Helper: Calculate accrued interest for a particular lender
+   * @param _loanId Loan id
+   * @param _future allows calculating accrued interest in future
+   * @return Accrued interest on current top bid, in Ether
+   */
+  function calculateInterestAccrued(uint256 _loanId, uint256 _future)
+    public
+    view
+    returns (uint256)
+  {
+    Loan memory loan = Loans[_loanId];
+    // Seconds that current bid has stayed at top
+    uint256 _secondsAsTopBid = block.timestamp + _future - loan.lastBidTime;
+    // Seconds that any loan has been active
+    uint256 _secondsSinceFirstBid = loan.loanCompleteTime - loan.firstBidTime;
+    // Duration of total loan time that current bid has been active
+    int128 _durationAsTopBid = ABDKMath64x64.divu(
+      _secondsAsTopBid,
+      _secondsSinceFirstBid
+    );
+    // Interest rate
+    int128 _interestRate = ABDKMath64x64.divu(loan.interestRate, 100);
+    // Calculating the maximum interest if paying _interestRate for all _secondsSinceFirstBid
+    uint256 _maxInterest = ABDKMath64x64.mulu(_interestRate, loan.loanAmount);
+    // Calculating the share of maximum interest to pay to top bidder
+    return ABDKMath64x64.mulu(_durationAsTopBid, _maxInterest);
+  }
+
+  /**
+   * Helper: Calculates required additional capital (over topbid) to outbid loan
+   * @param _loanId Loan id
+   * @param _future allows calculating required additional capital in future
+   * @return required interest payment to cover current top bidder
+   */
+  function calculateTotalInterest(uint256 _loanId, uint256 _future)
+    public
+    view
+    returns (uint256)
+  {
+    Loan memory loan = Loans[_loanId];
+
+    // past lender interest + current accrued interest
+    return loan.historicInterest + calculateInterestAccrued(_loanId, _future);
+  }
+
+  /**
+   * Helper: Calculate required capital to repay loan
+   * @param _loanId Loan id
+   * @param _future allows calculating require payment in future
+   * @return required loan repayment in Ether
+   */
+  function calculateRequiredRepayment(uint256 _loanId, uint256 _future)
+    public
+    view
+    returns (uint256)
+  {
+    Loan memory loan = Loans[_loanId];
+
+    // amount withdrawn + total interest to be paid
+    return loan.loanAmountDrawn + calculateTotalInterest(_loanId, _future);
+  }
+
+  /**
+   * Enables a lender/bidder to underwrite a loan, given it is the top bid
+   * @param _loanId id of loan to underwrite
+   * @dev Requires an unpaid loan, where currentBid < newBid <= maxBid
+   */
+  function underwriteLoan(uint256 _loanId) external payable {
+    Loan storage loan = Loans[_loanId];
+    // Prevent underwriting with 0 value
+    require(msg.value > 0, "Can't underwrite with 0 Ether.");
+    // Prevent underwriting a repaid loan
+    require(loan.tokenOwner != address(0), "Can't underwrite a repaid loan.");
+    // Prevent underwriting an expired loan
+    require(
+      loan.loanCompleteTime >= block.timestamp,
+      "Can't underwrite expired loan."
     );
 
-    if (loan.state == DataTypes.LoanState.Active) {
-      healthFactor = GenericLogic.calculateHealthFactorFromBalances(
-        totalCollateral,
-        totalDebt,
-        liquidationThreshold
+    // If loan has a previous bid:
+    if (loan.firstBidTime != 0) {
+      // Historic interest paid to previous top bidders + accrued interest to current bidder
+      // As of current block (future = 0 seconds)
+      uint256 _totalInterest = calculateTotalInterest(_loanId, 0);
+      // Calculate total payout for previous bidder
+      uint256 _bidPayout = loan.loanAmount + _totalInterest;
+
+      // Prevent underwriting a loan with value < required payout
+      require(_bidPayout < msg.value, "Can't underwrite < top lender.");
+      // Prevent underwriting a loan with value greater than max bid + pending interest
+      require(
+        loan.maxLoanAmount + _totalInterest >= msg.value,
+        "Can't underwrite > max loan."
       );
-    }
-  }
 
-  /**
-   * @dev Returns the auction data of the NFT
-   * @param nftAsset The address of the NFT
-   * @param nftTokenId The token id of the NFT
-   * @return loanId the loan id of the NFT
-   * @return bidderAddress the highest bidder address of the loan
-   * @return bidPrice the highest bid price in Reserve of the loan
-   * @return bidBorrowAmount the borrow amount in Reserve of the loan
-   * @return bidFine the penalty fine of the loan
-   **/
-  function getNftAuctionData(address nftAsset, uint256 nftTokenId)
-    external
-    view
-    override
-    returns (
-      uint256 loanId,
-      address bidderAddress,
-      uint256 bidPrice,
-      uint256 bidBorrowAmount,
-      uint256 bidFine
-    )
-  {
-    DataTypes.NftData storage nftData = _nfts[nftAsset];
-    ILendPoolLoan poolLoan = ILendPoolLoan(
-      _addressesProvider.getLendPoolLoan()
-    );
+      // Buyout current top bidder
+      (bool sent, ) = payable(loan.lender).call{ value: _bidPayout }("");
+      require(sent == true, "Failed to buyout top bidder.");
 
-    loanId = poolLoan.getCollateralLoanId(nftAsset, nftTokenId);
-    if (loanId != 0) {
-      DataTypes.LoanData memory loan = ILendPoolLoan(
-        _addressesProvider.getLendPoolLoan()
-      ).getLoan(loanId);
-      DataTypes.ReserveData storage reserveData = _reserves[loan.reserveAsset];
-
-      bidderAddress = loan.bidderAddress;
-      bidPrice = loan.bidPrice;
-      bidBorrowAmount = loan.bidBorrowAmount;
-
-      (, bidFine) = GenericLogic.calculateLoanBidFine(
-        loan.reserveAsset,
-        reserveData,
-        nftAsset,
-        nftData,
-        loan,
-        address(poolLoan),
-        _addressesProvider.getReserveOracle()
-      );
-    }
-  }
-
-  function getNftAuctionEndTime(address nftAsset, uint256 nftTokenId)
-    external
-    view
-    override
-    returns (
-      uint256 loanId,
-      uint256 bidStartTimestamp,
-      uint256 bidEndTimestamp,
-      uint256 redeemEndTimestamp
-    )
-  {
-    DataTypes.NftData storage nftData = _nfts[nftAsset];
-    ILendPoolLoan poolLoan = ILendPoolLoan(
-      _addressesProvider.getLendPoolLoan()
-    );
-
-    loanId = poolLoan.getCollateralLoanId(nftAsset, nftTokenId);
-    if (loanId != 0) {
-      DataTypes.LoanData memory loan = ILendPoolLoan(
-        _addressesProvider.getLendPoolLoan()
-      ).getLoan(loanId);
-
-      bidStartTimestamp = loan.bidStartTimestamp;
-      if (bidStartTimestamp > 0) {
-        (bidEndTimestamp, redeemEndTimestamp) = GenericLogic
-          .calculateLoanAuctionEndTimestamp(
-            nftData,
-            loan,
-            _pauseStartTime,
-            _pauseDurationTime
-          );
-      }
-    }
-  }
-
-  struct GetLiquidationPriceLocalVars {
-    address poolLoan;
-    uint256 loanId;
-    uint256 thresholdPrice;
-    uint256 liquidatePrice;
-    uint256 paybackAmount;
-    uint256 remainAmount;
-  }
-
-  function getNftLiquidatePrice(address nftAsset, uint256 nftTokenId)
-    external
-    view
-    override
-    returns (uint256 liquidatePrice, uint256 paybackAmount)
-  {
-    GetLiquidationPriceLocalVars memory vars;
-
-    vars.poolLoan = _addressesProvider.getLendPoolLoan();
-    vars.loanId = ILendPoolLoan(vars.poolLoan).getCollateralLoanId(
-      nftAsset,
-      nftTokenId
-    );
-    if (vars.loanId == 0) {
-      return (0, 0);
-    }
-
-    DataTypes.LoanData memory loanData = ILendPoolLoan(vars.poolLoan).getLoan(
-      vars.loanId
-    );
-
-    DataTypes.ReserveData storage reserveData = _reserves[
-      loanData.reserveAsset
-    ];
-    DataTypes.NftData storage nftData = _nfts[nftAsset];
-
-    (
-      vars.paybackAmount,
-      vars.thresholdPrice,
-      vars.liquidatePrice
-    ) = GenericLogic.calculateLoanLiquidatePrice(
-      vars.loanId,
-      loanData.reserveAsset,
-      reserveData,
-      loanData.nftAsset,
-      nftData,
-      vars.poolLoan,
-      _addressesProvider.getReserveOracle(),
-      _addressesProvider.getNFTOracle()
-    );
-
-    if (vars.liquidatePrice < vars.paybackAmount) {
-      vars.liquidatePrice = vars.paybackAmount;
-    }
-
-    return (vars.liquidatePrice, vars.paybackAmount);
-  }
-
-  /**
-   * @dev Validates and finalizes an bToken transfer
-   * - Only callable by the overlying bToken of the `asset`
-   * @param asset The address of the underlying asset of the bToken
-   * @param from The user from which the bToken are transferred
-   * @param to The user receiving the bTokens
-   * @param amount The amount being transferred/withdrawn
-   * @param balanceFromBefore The bToken balance of the `from` user before the transfer
-   * @param balanceToBefore The bToken balance of the `to` user before the transfer
-   */
-  function finalizeTransfer(
-    address asset,
-    address from,
-    address to,
-    uint256 amount,
-    uint256 balanceFromBefore,
-    uint256 balanceToBefore
-  ) external view override whenNotPaused {
-    asset;
-    from;
-    to;
-    amount;
-    balanceFromBefore;
-    balanceToBefore;
-
-    DataTypes.ReserveData storage reserve = _reserves[asset];
-    require(
-      _msgSender() == reserve.bTokenAddress,
-      "LP_CALLER_MUST_BE_AN_BTOKEN"
-    );
-
-    ValidationLogic.validateTransfer(from, reserve);
-  }
-
-  /**
-   * @dev Returns the list of the initialized reserves
-   **/
-  function getReservesList() external view override returns (address[] memory) {
-    address[] memory _activeReserves = new address[](_reservesCount);
-
-    for (uint256 i = 0; i < _reservesCount; i++) {
-      _activeReserves[i] = _reservesList[i];
-    }
-    return _activeReserves;
-  }
-
-  /**
-   * @dev Returns the list of the initialized nfts
-   **/
-  function getNftsList() external view override returns (address[] memory) {
-    address[] memory _activeNfts = new address[](_nftsCount);
-
-    for (uint256 i = 0; i < _nftsCount; i++) {
-      _activeNfts[i] = _nftsList[i];
-    }
-    return _activeNfts;
-  }
-
-  /**
-   * @dev Set the _pause state of the pool
-   * - Only callable by the LendPoolConfigurator contract
-   * @param val `true` to pause the pool, `false` to un-pause it
-   */
-  function setPause(bool val) external override onlyLendPoolConfigurator {
-    if (_paused != val) {
-      _paused = val;
-      if (_paused) {
-        _pauseStartTime = block.timestamp;
-        emit Paused();
-      } else {
-        _pauseDurationTime = block.timestamp - _pauseStartTime;
-        emit Unpaused();
-      }
-    }
-  }
-
-  /**
-   * @dev Returns if the LendPool is paused
-   */
-  function paused() external view override returns (bool) {
-    return _paused;
-  }
-
-  function setPausedTime(uint256 startTime, uint256 durationTime)
-    external
-    override
-    onlyLendPoolConfigurator
-  {
-    _pauseStartTime = startTime;
-    _pauseDurationTime = durationTime;
-    emit PausedTimeUpdated(startTime, durationTime);
-  }
-
-  function getPausedTime() external view override returns (uint256, uint256) {
-    return (_pauseStartTime, _pauseDurationTime);
-  }
-
-  /**
-   * @dev Returns the cached LendPoolAddressesProvider connected to this contract
-   **/
-  function getAddressesProvider()
-    external
-    view
-    override
-    returns (ILendPoolAddressesProvider)
-  {
-    return _addressesProvider;
-  }
-
-  function setMaxNumberOfReserves(uint256 val)
-    external
-    override
-    onlyLendPoolConfigurator
-  {
-    _maxNumberOfReserves = val;
-  }
-
-  /**
-   * @dev Returns the maximum number of reserves supported to be listed in this LendPool
-   */
-  function getMaxNumberOfReserves() public view override returns (uint256) {
-    return _maxNumberOfReserves;
-  }
-
-  function setMaxNumberOfNfts(uint256 val)
-    external
-    override
-    onlyLendPoolConfigurator
-  {
-    _maxNumberOfNfts = val;
-  }
-
-  /**
-   * @dev Returns the maximum number of nfts supported to be listed in this LendPool
-   */
-  function getMaxNumberOfNfts() public view override returns (uint256) {
-    return _maxNumberOfNfts;
-  }
-
-  /**
-   * @dev Initializes a reserve, activating it, assigning an bToken and nft loan and an
-   * interest rate strategy
-   * - Only callable by the LendPoolConfigurator contract
-   * @param asset The address of the underlying asset of the reserve
-   * @param bTokenAddress The address of the bToken that will be assigned to the reserve
-   * @param debtTokenAddress The address of the debtToken that will be assigned to the reserve
-   * @param interestRateAddress The address of the interest rate strategy contract
-   **/
-  function initReserve(
-    address asset,
-    address bTokenAddress,
-    address debtTokenAddress,
-    address interestRateAddress
-  ) external override onlyLendPoolConfigurator {
-    require(AddressUpgradeable.isContract(asset), Errors.LP_NOT_CONTRACT);
-    _reserves[asset].init(bTokenAddress, debtTokenAddress, interestRateAddress);
-    _addReserveToList(asset);
-  }
-
-  /**
-   * @dev Initializes a nft, activating it, assigning nft loan and an
-   * interest rate strategy
-   * - Only callable by the LendPoolConfigurator contract
-   * @param asset The address of the underlying asset of the nft
-   **/
-  function initNft(address asset, address bNftAddress)
-    external
-    override
-    onlyLendPoolConfigurator
-  {
-    require(AddressUpgradeable.isContract(asset), Errors.LP_NOT_CONTRACT);
-    _nfts[asset].init(bNftAddress);
-    _addNftToList(asset);
-
-    require(
-      _addressesProvider.getLendPoolLoan() != address(0),
-      "LPC_INVALIED_LOAN_ADDRESS"
-    );
-    IERC721Upgradeable(asset).setApprovalForAll(
-      _addressesProvider.getLendPoolLoan(),
-      true
-    );
-
-    ILendPoolLoan(_addressesProvider.getLendPoolLoan()).initNft(
-      asset,
-      bNftAddress
-    );
-  }
-
-  /**
-   * @dev Updates the address of the interest rate strategy contract
-   * - Only callable by the LendPoolConfigurator contract
-   * @param asset The address of the underlying asset of the reserve
-   * @param rateAddress The address of the interest rate strategy contract
-   **/
-  function setReserveInterestRateAddress(address asset, address rateAddress)
-    external
-    override
-    onlyLendPoolConfigurator
-  {
-    _reserves[asset].interestRateAddress = rateAddress;
-  }
-
-  /**
-   * @dev Sets the configuration bitmap of the reserve as a whole
-   * - Only callable by the LendPoolConfigurator contract
-   * @param asset The address of the underlying asset of the reserve
-   * @param configuration The new configuration bitmap
-   **/
-  function setReserveConfiguration(address asset, uint256 configuration)
-    external
-    override
-    onlyLendPoolConfigurator
-  {
-    _reserves[asset].configuration.data = configuration;
-  }
-
-  /**
-   * @dev Sets the configuration bitmap of the NFT as a whole
-   * - Only callable by the LendPoolConfigurator contract
-   * @param asset The address of the asset of the NFT
-   * @param configuration The new configuration bitmap
-   **/
-  function setNftConfiguration(address asset, uint256 configuration)
-    external
-    override
-    onlyLendPoolConfigurator
-  {
-    _nfts[asset].configuration.data = configuration;
-  }
-
-  function setNftMaxSupplyAndTokenId(
-    address asset,
-    uint256 maxSupply,
-    uint256 maxTokenId
-  ) external override onlyLendPoolConfigurator {
-    _nfts[asset].maxSupply = maxSupply;
-    _nfts[asset].maxTokenId = maxTokenId;
-  }
-
-  function _addReserveToList(address asset) internal {
-    uint256 reservesCount = _reservesCount;
-
-    require(
-      reservesCount < _maxNumberOfReserves,
-      "LP_NO_MORE_RESERVES_ALLOWED"
-    );
-
-    bool reserveAlreadyAdded = _reserves[asset].id != 0 ||
-      _reservesList[0] == asset;
-
-    if (!reserveAlreadyAdded) {
-      _reserves[asset].id = uint8(reservesCount);
-      _reservesList[reservesCount] = asset;
-
-      _reservesCount = reservesCount + 1;
-    }
-  }
-
-  function _addNftToList(address asset) internal {
-    uint256 nftsCount = _nftsCount;
-
-    require(nftsCount < _maxNumberOfNfts, "no more nfts allowed");
-
-    bool nftAlreadyAdded = _nfts[asset].id != 0 || _nftsList[0] == asset;
-
-    if (!nftAlreadyAdded) {
-      _nfts[asset].id = uint8(nftsCount);
-      _nftsList[nftsCount] = asset;
-
-      _nftsCount = nftsCount + 1;
-    }
-  }
-
-  function _verifyCallResult(
-    bool success,
-    bytes memory returndata,
-    string memory errorMessage
-  ) internal pure returns (bytes memory) {
-    if (success) {
-      return returndata;
+      // Increment historic paid interest
+      loan.historicInterest += _totalInterest;
+      // Update new loan amount
+      loan.loanAmount = msg.value - _totalInterest;
     } else {
-      // Look for revert reason and bubble it up if present
-      if (returndata.length > 0) {
-        // The easiest way to bubble the revert reason is using memory via assembly
-        assembly {
-          let returndata_size := mload(returndata)
-          revert(add(32, returndata), returndata_size)
-        }
-      } else {
-        revert(errorMessage);
-      }
+      // Prevent underwriting a loan with value greater than max bid
+      require(loan.maxLoanAmount >= msg.value, "Can't underwrite > max loan.");
+      // If loan doesn't have a previous bid (to buyout), set first bid time
+      loan.firstBidTime = block.timestamp;
+      // Update new loan amount
+      loan.loanAmount = msg.value;
     }
+
+    // Update new lender address
+    loan.lender = msg.sender;
+    // Update last bid time
+    loan.lastBidTime = block.timestamp;
+
+    // Emit new underwriting event
+    emit LoanUnderwritten(_loanId, msg.sender);
   }
 
-  function _buildLendPoolVars()
-    internal
-    view
-    returns (DataTypes.ExecuteLendPoolStates memory)
-  {
-    return
-      DataTypes.ExecuteLendPoolStates({
-        pauseStartTime: _pauseStartTime,
-        pauseDurationTime: _pauseDurationTime
-      });
+  /**
+   * Enables NFT owner to draw capital from top bid
+   * @param _loanId id of loan to draw from
+   */
+  function drawLoan(uint256 _loanId) external {
+    Loan storage loan = Loans[_loanId];
+    // Prevent non-loan-owner from drawing
+    require(loan.tokenOwner == msg.sender, "Must be NFT owner to draw.");
+    // Prevent drawing from a loan with 0 available capital
+    require(
+      loan.loanAmountDrawn < loan.loanAmount,
+      "Max draw capacity reached."
+    );
+
+    // Calculate capital to draw
+    uint256 _availableCapital = loan.loanAmount - loan.loanAmountDrawn;
+    // Update drawn amount to current loan capacity
+    loan.loanAmountDrawn = loan.loanAmount;
+    // Draw the maximum available loan capital
+    (bool sent, ) = payable(msg.sender).call{ value: _availableCapital }("");
+    require(sent, "Failed to draw capital.");
+
+    // Emit draw event
+    emit LoanDrawn(_loanId);
+  }
+
+  /**
+   * Enables anyone to repay a loan on behalf of owner
+   * @param _loanId id of loan to repay
+   */
+  function repayLoan(uint256 _loanId) external payable {
+    Loan storage loan = Loans[_loanId];
+    // Prevent repaying repaid loan
+    require(loan.tokenOwner != address(0), "Can't repay paid loan.");
+    // Prevent repaying loan without bids
+    require(loan.firstBidTime != 0, "Can't repay loan with 0 bids.");
+    // Prevent repaying loan after expiry
+    require(
+      loan.loanCompleteTime >= block.timestamp,
+      "Can't repay expired loan."
+    );
+
+    // Add historic interest paid to previous top bidders + accrued interest to top bidder
+    // As of current block (future = 0 seconds)
+    uint256 _totalInterest = calculateTotalInterest(_loanId, 0);
+    // Calculate additional capital required to process payout
+    uint256 _additionalCapital = loan.loanAmountDrawn + _totalInterest;
+    // Enforce additional required capital is passed to contract
+    require(msg.value >= _additionalCapital, "Insufficient repayment.");
+
+    // Payout current top bidder (loan amount + total pending interest)
+    (bool sent, ) = payable(loan.lender).call{
+      value: (loan.loanAmount + _totalInterest)
+    }("");
+    require(sent, "Failed to repay loan.");
+
+    // Transfer NFT back to owner
+    IERC721(loan.tokenAddress).transferFrom(
+      address(this),
+      loan.tokenOwner,
+      loan.tokenId
+    );
+
+    // Toggle loan repayment (nullify tokenOwner)
+    loan.tokenOwner = address(0);
+
+    // Emit repayment event
+    emit LoanRepayed(_loanId, loan.lender, msg.sender);
+  }
+
+  /**
+   * Enables owner to cancel loan
+   * @param _loanId id of loan to cancel
+   * @dev requires no active bids to be placed (else, use repay)
+   */
+  function cancelLoan(uint256 _loanId) external {
+    Loan storage loan = Loans[_loanId];
+    // Enforce loan ownership
+    require(loan.tokenOwner == msg.sender, "Must be NFT owner to cancel.");
+    // Enforce loan has no bids
+    require(loan.firstBidTime == 0, "Can't cancel loan with >0 bids.");
+
+    // Return NFT to owner
+    IERC721(loan.tokenAddress).transferFrom(
+      address(this),
+      msg.sender,
+      loan.tokenId
+    );
+
+    // Nullify loan
+    loan.tokenOwner = address(0);
+
+    // Emit cancelleation event
+    emit LoanCancelled(_loanId);
+  }
+
+  /**
+   * Enables anyone to seize NFT, for lender, on loan default
+   * @param _loanId id of loan to seize collateral
+   */
+  function seizeNFT(uint256 _loanId) external {
+    Loan memory loan = Loans[_loanId];
+    // Enforce loan is unpaid
+    require(loan.tokenOwner != address(0), "Can't seize from repaid loan.");
+    // Enforce loan is expired
+    require(
+      loan.loanCompleteTime < block.timestamp,
+      "Can't seize before expiry."
+    );
+
+    // Transfer NFT to lender
+    IERC721(loan.tokenAddress).transferFrom(
+      address(this),
+      loan.lender,
+      loan.tokenId
+    );
+
+    // Emit seize event
+    emit LoanSeized(_loanId, loan.lender, msg.sender);
   }
 }
+
+// create loan
+// calculate intrest
+// calculate total intrest
+// calculate repayement
+// underwrite loan
+// draw loan
+// repay loanAddress
+// repay loan
+// cancel loan
+// seize NFT
