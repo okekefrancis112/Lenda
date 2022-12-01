@@ -9,9 +9,11 @@ import {ILendaReserve} from "../interfaces/ILendaReserve.sol";
     @dev This contract is responsible for holding matic deposit of depositors/lenders
 **/
 contract LendaReserve is ILendaReserve {
-/***==========================
-    =   Error Message        =
-    ==========================*/
+/**
+     * ===================================================
+     * ----------------- Error Message -------------------
+     * ===================================================
+*/
     error mustApprove(string);
 
 
