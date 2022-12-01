@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 
 import "abdk-libraries-solidity/ABDKMath64x64.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "./utils/collateralStorage.sol";
+import "./utils/lendaReserve.sol";
 
 /**
  * @title LendPool contract
@@ -16,11 +18,41 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
  * @dev Unlike original spec., lenders are paid for only active duration (D')
  */
 contract LendPool {
-  modifier onlyOwner() {
-    require(msg.sender == owner, "only owner can call bozo");
-    _;
-  }
-  // ============ Structs ============
+  // modifier onlyOwner() {
+  //   require(msg.sender == owner, "only owner can call bozo");
+  //   _;
+  // }
+
+/**
+ *==================================
+  ---------- EVENTS ----------------
+  ==================================
+*/
+// Loan creation event with indexed NFT owner
+  event LoanCreated(
+    uint256 id,
+    address indexed owner,
+    address tokenAddress,
+    uint256 tokenId,
+    uint256 maxLoanAmount,
+    uint256 loanCompleteTime
+  );
+  // New loan lender/bidder
+  event LoanUnderwritten(uint256 id, address lender);
+  // Loan drawn by NFT owner
+  event LoanDrawn(uint256 id);
+  // Loan repayed by address
+  event LoanRepayed(uint256 id, address lender, address repayer);
+  // Loan cancelled by NFT owner
+  event LoanCancelled(uint256 id);
+  // NFT seized by lender
+  event LoanSeized(uint256 id, address lender, address caller);
+
+/**
+ *==================================
+  ---------- STRUCTS ---------------
+  ==================================
+*/==
   struct Loan {
     // NFT token address
     address tokenAddress;
@@ -48,36 +80,23 @@ contract LendPool {
     uint256 loanCompleteTime;
   }
 
-  // ============ Mutable storage ============
+/**
+ *==================================
+  ------- MUTABLE STORAGE ----------
+  ==================================
+*/
 
   // Number of loans issued
   uint256 public numLoans;
   // Mapping of loan number to loan struct
   mapping(uint256 => Loan) public Loans;
 
-  // ============ Events ============
 
-  // Loan creation event with indexed NFT owner
-  event LoanCreated(
-    uint256 id,
-    address indexed owner,
-    address tokenAddress,
-    uint256 tokenId,
-    uint256 maxLoanAmount,
-    uint256 loanCompleteTime
-  );
-  // New loan lender/bidder
-  event LoanUnderwritten(uint256 id, address lender);
-  // Loan drawn by NFT owner
-  event LoanDrawn(uint256 id);
-  // Loan repayed by address
-  event LoanRepayed(uint256 id, address lender, address repayer);
-  // Loan cancelled by NFT owner
-  event LoanCancelled(uint256 id);
-  // NFT seized by lender
-  event LoanSeized(uint256 id, address lender, address caller);
-
-  // ============ Functions ============
+/**
+ *==================================
+  --------- FUNCTIONS --------------
+  ==================================
+*/
 
   /**
    * Enables an NFT owner to create a loan, specifying parameters
@@ -88,7 +107,7 @@ contract LendPool {
    * @param _loanCompleteTime time of loan completion
    * @return Loan id
    */
-  function createLoan(
+  function borrow(
     address _tokenAddress,
     uint256 _tokenId,
     uint256 _interestRate,
@@ -96,7 +115,7 @@ contract LendPool {
     uint256 _loanCompleteTime
   ) external returns (uint256) {
     // Enforce creating future-dated loan
-    require(_loanCompleteTime > block.timestamp, "Can't create loan in past");
+    require(_loanCompleteTime > block.timestamp && _loanCompleteTime < 30 days, "Can't create loan in past");
 
     // NFT id
     uint256 loanId = ++numLoans;
