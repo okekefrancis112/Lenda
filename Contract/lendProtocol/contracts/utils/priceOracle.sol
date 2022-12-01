@@ -17,7 +17,6 @@ contract PriceOracle {
 
     constructor() {
         owner = msg.sender;
-        
         ethpriceFeed = AggregatorV3Interface(
             0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e
         );
@@ -63,7 +62,6 @@ contract PriceOracle {
 
         uint256 amount = getConversionRate(nftFloorPriceFeed);
         loanable = (amount * minRate) / 100;
-        
     }
 
     function _setRate(uint256 newRate) private onlyOwner {
