@@ -3,12 +3,20 @@
 pragma solidity 0.8.17;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /** @title Price Oracle Contract
     @dev This contract aims to get the onchain data of NFT floor price across all NFT platforms
     - to deduce Lenda NFT worth
 **/
 contract PriceOracle {
+/**
+    ==================================
+    ------- State Variables ----------
+    ==================================
+*/
+
+    mapping(IERC721 => uint256) setFloorPrice;
 
     // AggregatorV3Interface internal nftFloorPriceFeed;
     AggregatorV3Interface internal ethpriceFeed;
@@ -58,7 +66,7 @@ contract PriceOracle {
         return ethAmountInUsd;
     }
 
-    function _amountLoanable(AggregatorV3Interface nftFloorPriceFeed) private view returns (uint256 loanable) {
+    function _amountLoanable(AggregatorV3Interface nftFloorPriceFeed) public view returns (uint256 loanable) {
 
         uint256 amount = getConversionRate(nftFloorPriceFeed);
         loanable = (amount * minRate) / 100;
@@ -67,6 +75,15 @@ contract PriceOracle {
     function _setRate(uint256 newRate) private onlyOwner {
         require(newRate != 0, "rate cannot be zero");
         minRate = newRate;
+    }
+
+    function setNFTFloorPrice(IERC721 _nftContractAddress, uint256 _amount) public onlyOwner{
+        setFloorPrice[_nftContractAddress] = _amount;
+    }
+
+    function availableToBorrow(IERC721 _nftContractAddress) public view returns (uint256 loanable){
+        uint256 getFloorPrice = setFloorPrice[_nftContractAddress];
+        loanable = (getFloorPrice * minRate) / 100;
     }
 
 }
