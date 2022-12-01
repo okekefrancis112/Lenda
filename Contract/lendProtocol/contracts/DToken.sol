@@ -21,7 +21,7 @@ error WithdrawFailed(address account, uint256 amount);
 /// @author zeroth-oc
 /// @notice this accepts prespecified erc20 and mints a a wrapped version of it back to the user,
 /// which can be redeemed for the undelying erc20 token at anytime
-contract ERC20wrapper is ERC20("DTOKEN", "DTKN", 18) {
+contract ERC20wrapper is ERC20("Depositor Matic", "DMatic", 18) {
   ///@notice the wrapped erc20 token
   IERC20 public immutable token;
 
@@ -56,8 +56,8 @@ contract ERC20wrapper is ERC20("DTOKEN", "DTKN", 18) {
   /// @param amount of tokens to be burned
   /// @dev follows the Checks-Effects-Interactions Pattern
   /// @dev this function may revert by throwing WithdrawFailed
-  function burn(uint256 amount) public {
-    _burn(msg.sender, amount);
+  function burn(uint256 amount, address _addr) public {
+    _burn(_addr, amount);
 
     (bool successful, ) = token.transfer(msg.sender, amount);
     if (!successful) {
