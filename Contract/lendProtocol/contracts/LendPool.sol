@@ -376,7 +376,6 @@ contract LendPool {
 // calculate repayement
 // underwrite loan
 // draw loan
-// repay loanAddress
 // repay loan
 // cancel loan
 // seize NFT
