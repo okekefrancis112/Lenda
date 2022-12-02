@@ -17,9 +17,6 @@ Lenda is a simple but powerful decentralized NFT lending protocol where users ca
 **# Copy .env.example to .env**
 **cp .env.variable.env variable.env**
  
-**# Create a database (with MongoDB)**
-**# Update variable.env file with database credentials**
- 
 **# Install NPM dependencies**
 **npm install**
  
