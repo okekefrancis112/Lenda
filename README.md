@@ -9,23 +9,23 @@ Lenda is a simple but powerful decentralized NFT lending protocol where users ca
  
 # Setting up 
 **# Get the latest snapshot**
-**git clone https://github.com/.git**
+**git clone https://github.com/okekefrancis112/Lenda.git**
  
-**# Change directory**
-**cd hackathon**
  
 **# Copy .env.example to .env**
 **cp .env.variable.env variable.env**
  
 **# Install NPM dependencies**
-**npm install**
+**yarn install**
  
 **# Then simply start your app**
-**npm start**
+**yarn run dev**
  
 # List of Packages
 **Dependencies are managed through package.json****. In that file you'll find two sections:**
- 
+    @nomicfoundation/hardhat-toolbox,
+    hardhat,
+    @openzeppelin/contracts,
  
 ## Contributing
 **Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are****greatly appreciated****.**
