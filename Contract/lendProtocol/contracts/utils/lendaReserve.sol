@@ -5,12 +5,11 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Wrapper.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import {ILendaReserve} from "../interfaces/ILendaReserve.sol";
 
 /** @title Lenda Matic Reserve
     @dev This contract is responsible for holding matic deposit of depositors/lenders
 **/
-contract LendaReserve is ILendaReserve, ERC20Wrapper, Ownable{
+contract LendaReserve is ERC20Wrapper, Ownable{
 /**
      * ===================================================
      * ----------------- Error Message -------------------
@@ -32,25 +31,34 @@ contract LendaReserve is ILendaReserve, ERC20Wrapper, Ownable{
         maticContractAddress = _maticContractAddress;
     }
 
-    function depositToReserve(uint256 _amount, address _depositor) public override {
+    function depositToReserve(uint256 _amount, address _depositor) internal {
         depositFor(_depositor, _amount);
     }
 
-    function withdrawFromReserve(uint256 _amount, address _depositor) public override {
+    function withdrawFromReserve(uint256 _amount, address _depositor) internal {
         withdrawTo(_depositor, _amount);
     }
 
-    function movingGeneric(address _receiver, address _tokenContractAddress, uint256 _amount) external override onlyOwner{
+    function _borrowFromReserve(address _borrower, uint256 _amount) internal {
+        transfer(_borrower, _amount);
+    }
+
+    function repay(address _borrower, uint256 _amount) internal {
+        require(maticContractAddress.allowance(_borrower, address(this)) >= _amount, "need to approve");
+        maticContractAddress.transferFrom(_borrower, address(this), _amount);
+    }
+
+    function movingGeneric(address _receiver, address _tokenContractAddress, uint256 _amount) external onlyOwner{
         IERC20(_tokenContractAddress).transfer(_receiver, _amount);
     }
 
-    function updateAdmin(address _newAdmin) external override onlyOwner{
+    function updateAdmin(address _newAdmin) external onlyOwner{
         transferOwnership(_newAdmin);
     }
 
     //View functions
 
-    function valueInReserve() external override view returns(uint256) {
+    function valueInReserve() external view returns(uint256) {
         return maticContractAddress.balanceOf(address(this));
     }
 
