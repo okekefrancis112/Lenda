@@ -45,14 +45,12 @@ hardhat,
 **See the for a list of proposed features (and known issues).** [open issues](https://github.com/github_username/repo_name/issues)
 
 ## Team
-
 @OC
 @Kayzee
 @CodeBlodded
 @AspireDev
 @Dave
 
-@team socials
 
 ## Contract Architecture
 
