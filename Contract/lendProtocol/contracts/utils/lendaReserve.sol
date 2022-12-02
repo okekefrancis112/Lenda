@@ -3,46 +3,41 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Wrapper.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import {ILendaReserve} from "../interfaces/ILendaReserve.sol";
 
 /** @title Lenda Matic Reserve
     @dev This contract is responsible for holding matic deposit of depositors/lenders
 **/
-contract LendaReserve is ILendaReserve {
+contract LendaReserve is ILendaReserve, ERC20Wrapper, Ownable{
 /**
      * ===================================================
      * ----------------- Error Message -------------------
      * ===================================================
 */
     error mustApprove(string);
-
-
-
+/**
+     * ===================================================
+     * ---------------- State Variables ------------------
+     * ===================================================
+*/
     IERC20 maticContractAddress;
-    address admin;
 
 
-    modifier onlyOwner(){
-        require(msg.sender == admin, "Only admin can call this function");
-
-        _;
+    constructor(IERC20 _maticContractAddress)
+    ERC20Wrapper(_maticContractAddress)
+    ERC20("Depositor Matic", "DMatic")
+    {
+        maticContractAddress = _maticContractAddress;
     }
 
-    constructor(address _maticContractAddress){
-        maticContractAddress = IERC20(_maticContractAddress);
+    function depositToReserve(uint256 _amount, address _depositor) public override {
+        depositFor(_depositor, _amount);
     }
 
-    function depositToReserve(uint256 _amount, address _depositor) external override{
-        if(maticContractAddress.allowance(_depositor, address(this)) >= _amount) revert mustApprove("amount to deposit must be approved");
-        maticContractAddress.transferFrom(_depositor, address(this), _amount);
-    }
-
-    function withdrawFromReserve(uint256 _amount, address _depositor) external override{
-        maticContractAddress.transfer(_depositor, _amount);
-    }
-
-    function updateContractAddress(address _maticContractAddress) external override onlyOwner{
-        maticContractAddress = IERC20(_maticContractAddress);
+    function withdrawFromReserve(uint256 _amount, address _depositor) public override {
+        withdrawTo(_depositor, _amount);
     }
 
     function movingGeneric(address _receiver, address _tokenContractAddress, uint256 _amount) external override onlyOwner{
@@ -50,7 +45,7 @@ contract LendaReserve is ILendaReserve {
     }
 
     function updateAdmin(address _newAdmin) external override onlyOwner{
-        admin = _newAdmin;
+        transferOwnership(_newAdmin);
     }
 
     //View functions
