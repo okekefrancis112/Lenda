@@ -46,8 +46,11 @@ hardhat,
 
 ## Team
 
-
-@TXCCA_
+@OC
+@Kayzee
+@CodeBlodded
+@AspireDev
+@Dave
 
 @team socials
 
