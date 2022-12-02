@@ -14,11 +14,11 @@ contract BMatic {
     mapping(address => uint256) userBalances;
 
 
-    function mint(address _addr, uint256 _amount) internal {
+    function mintBMatic(address _addr, uint256 _amount) internal {
         userBalances[_addr] += _amount;
     }
 
-    function balanceOf(address _addr) public view returns(uint256){
+    function balanceOfBMatic(address _addr) public view returns(uint256){
         return userBalances[_addr];
     }
 
