@@ -1,0 +1,7 @@
+.navDropdown {
+  display: none;
+}
+
+.navContainer:hover .navDropdown {
+  display: block;
+}
