@@ -47,7 +47,7 @@ hardhat,
 ## Team
 @OC
 @Kayzee
-@CodeBlodded
+@CodeBlooded
 @AspireDev
 @Dave
 
