@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /** @title Lenda Matic Reserve
     @dev This contract is responsible for holding matic deposit of depositors/lenders
 **/
-contract LendaReserve is ERC20Wrapper, Ownable{
+abstract contract LendaReserve is ERC20Wrapper, Ownable{
 /**
      * ===================================================
      * ----------------- Error Message -------------------
@@ -21,13 +21,10 @@ contract LendaReserve is ERC20Wrapper, Ownable{
      * ---------------- State Variables ------------------
      * ===================================================
 */
-    IERC20 maticContractAddress;
+    IERC20 public immutable maticContractAddress;
 
 
-    constructor(IERC20 _maticContractAddress)
-    ERC20Wrapper(_maticContractAddress)
-    ERC20("Depositor Matic", "DMatic")
-    {
+    constructor(IERC20 _maticContractAddress){
         maticContractAddress = _maticContractAddress;
     }
 

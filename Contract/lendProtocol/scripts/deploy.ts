@@ -1,18 +1,37 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
 
-  const lockedAmount = ethers.utils.parseEther("1");
+  //mocked matic cdeployment
+  const MATIC = await ethers.getContractFactory("mMatic");
+  const matic = await MATIC.deploy(1_000_000_000);
+  await matic.deployed();
 
-  const Lock = await ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+  // lenda token deployment
 
-  await lock.deployed();
+  const LENDA = await ethers.getContractFactory("LendaToken");
+  const lenda = await LENDA.deploy(1_000_000_000);
+  await lenda.deployed();
 
-  console.log(`Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`);
+
+  // Lendpool contract deployment
+
+  const LendPool = await ethers.getContractFactory("LendPool");
+  const lendpool = await LendPool.deploy(matic.address);
+  await lendpool.deployed();
+
+
+
+  // yield contract deployment
+
+  const Yield = await ethers.getContractFactory("YieldContract");
+  const yields = await Yield.deploy(lendpool.address);
+  await yields.deployed();
+
+  console.log(`Lendpool is deployed to ${lendpool.address}`);
+  console.log(`Yield Contract is deployed to ${yields.address}`);
+  console.log(`Matic contract address is deployed to ${matic.address}`);
+  console.log(`Lenda toke is deployed to ${lenda.address}`);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

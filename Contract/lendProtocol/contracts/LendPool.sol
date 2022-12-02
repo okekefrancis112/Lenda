@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.9;
 
-import "abdk-libraries-solidity/ABDKMath64x64.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./utils/lendaReserve.sol";
@@ -20,7 +19,7 @@ import {CollateralStorage} from "./libraries/collateralStorage.sol";
  *      errors w.r.t stack too deep (too large of a struct to include a bool)
  * @dev Unlike original spec., lenders are paid for only active duration (D')
  */
-contract LendPool is PriceOracle, LendaReserve, BMatic{
+contract LendPool is LendaReserve, PriceOracle, BMatic{
 /**
  *==================================
   -------- Error Message -----------
@@ -44,13 +43,13 @@ contract LendPool is PriceOracle, LendaReserve, BMatic{
  *==================================
   ---------- STRUCTS ---------------
   ==================================
-*/==
+*/
   struct Loan {
-    address tokenAddress;
+    IERC721 tokenAddress;
     uint256 tokenId;
     uint256 loanAmount;
     uint256 loanCompleteTime;
-    uint256 amountToRepay
+    uint256 amountToRepay;
     uint256 timeOfLoan;
     bool _onLoan;
   }
@@ -69,6 +68,14 @@ contract LendPool is PriceOracle, LendaReserve, BMatic{
   uint256 public amountForLiquidity;
 
 
+
+  constructor(IERC20 _maticContractAddress)
+  LendaReserve(_maticContractAddress)
+  ERC20Wrapper(_maticContractAddress)
+  ERC20("Deposit Matic", "DMatic")
+  {}
+
+
 /**
  *==================================
   --------- FUNCTIONS --------------
@@ -79,19 +86,17 @@ contract LendPool is PriceOracle, LendaReserve, BMatic{
    * Enables an NFT owner to create a loan, specifying parameters
    * @param _tokenAddress NFT token address
    * @param _tokenId NFT token id
-   * @param _interestRate percentage fixed interest rate for period
-   * @param _maxLoanAmount maximum allowed Ether bid
    * @param _loanCompleteTime time of loan completion
-   * @return Loan id
+   * @param _amountToBorrow : amount a user wnats to borrow
    */
   function borrowLoan(
     IERC721 _tokenAddress,
     uint256 _tokenId,
     uint256 _loanCompleteTime,
     uint256 _amountToBorrow
-  ) external returns (uint256) {
+  ) external{
     Loan storage loan = Loans[msg.sender];
-    require(!_onLoan, "Pay your debt first");
+    require(!loan._onLoan, "Pay your debt first");
     require((_loanCompleteTime * 1 days) < 30 days, "Can't issue a loan beyond 30 days");
     assert((_loanCompleteTime * 1 days) > block.timestamp);
     require(checkIfNFTIsAvailable(_tokenAddress), "NFT not supported");
@@ -105,7 +110,7 @@ contract LendPool is PriceOracle, LendaReserve, BMatic{
     uint256 payBack = _amountToBorrow + getInterestAccrued;
     loan.amountToRepay = payBack;
     CollateralStorage.depositToStorage(msg.sender, _tokenId, _tokenAddress);
-    mintBMatic(msg.sender, payBack);
+    // mintBMatic(msg.sender, payBack);
     _borrowFromReserve(msg.sender, _amountToBorrow);
     loan._onLoan = true;
 
@@ -120,10 +125,11 @@ contract LendPool is PriceOracle, LendaReserve, BMatic{
   function repayLoan() external {
     Loan storage loan = Loans[msg.sender];
     require(loan._onLoan, "You don't have any loan avalable");
-    repay(msg.sender, balanceOfBMatic(msg.sender));
+    // repay(msg.sender, balanceOfBMatic(msg.sender));
     CollateralStorage.withdrawFromStorage(msg.sender, loan.tokenId, loan.tokenAddress);
+    // burnBMatic(msg.sender, balanceOfBMatic(msg.sender));
     loan._onLoan = false;
-    uint256 profitMade = loan.amountToRepay - loan.loanAmount;
+    // uint256 profitMade = loan.amountToRepay - loan.loanAmount;
   }
 
 
@@ -150,8 +156,8 @@ contract LendPool is PriceOracle, LendaReserve, BMatic{
 
 
   function setSupportedNFT(IERC721 _NFTAddress) public onlyOwner{
-    assert(!checkIfNFTIsAvailable());
-    supportedTokenAddress.push(_NFTAddress)
+    assert(!checkIfNFTIsAvailable(_NFTAddress));
+    supportedTokenAddress.push(_NFTAddress);
   }
 }
 

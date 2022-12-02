@@ -11,17 +11,17 @@ library CollateralStorage{
 /***==========================
     =   Error Message        =
     ==========================*/
-    error mustApprove(string);
+    error mustApproved(string);
 
 
-    function depositToStorage(address _depositor, uint256 _tokenId, address _nftContractAddress) internal {
-        IERC721 nftContractAddress = IERC721(_nftContractAddress);
-        if(nftContractAddress.isApprovedForAll(_depositor, address(this)) != true) revert mustApprove("must approve to spend");
+    function depositToStorage(address _depositor, uint256 _tokenId, IERC721 _nftContractAddress) internal {
+        IERC721 nftContractAddress = _nftContractAddress;
+        if(nftContractAddress.isApprovedForAll(_depositor, address(this)) != true) revert mustApproved("must approve to spend");
         nftContractAddress.transferFrom(_depositor, address(this), _tokenId);
     }
 
-    function withdrawFromStorage(address _depositor, uint256 _tokenId, address _nftContractAddress) internal {
-        IERC721(_nftContractAddress).transferFrom(address(this), _depositor, _tokenId);
+    function withdrawFromStorage(address _depositor, uint256 _tokenId, IERC721 _nftContractAddress) internal {
+        _nftContractAddress.transferFrom(address(this), _depositor, _tokenId);
     }
 
     function valueInReserve(address _nftContractAddress) public view returns(uint256) {

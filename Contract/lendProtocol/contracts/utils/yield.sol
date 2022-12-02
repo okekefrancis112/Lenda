@@ -5,6 +5,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 
 /** @title Yield Contract
@@ -12,7 +13,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
     - 0.4LND is minted per seconds which is shared among all farmers that locked their DMatic token
     - Farmers can check the possible amount of LND they will receive base on their DMatic locked
 **/
-contract YieldContract is ERC20("Lenda Token", "LND") {
+contract YieldContract is Ownable, ERC20("Lenda Token", "LND") {
     uint256 public constant FACTOR = 1e15;
 
 /**
@@ -28,7 +29,6 @@ contract YieldContract is ERC20("Lenda Token", "LND") {
      * ===================================================
 */
     IERC20 DTokenAddress;
-    address admin;
 
     struct Farmer {
         uint256 daysToHarvest;
@@ -40,15 +40,13 @@ contract YieldContract is ERC20("Lenda Token", "LND") {
     mapping(address => Farmer) farmers;
 
 
-    constructor(address _admin, address _DTokenAddress){
-        admin = _admin;
+    constructor(address _DTokenAddress){
         DTokenAddress = IERC20(_DTokenAddress);
     }
 
 
     function getInterestAccrued(uint256 _amountLock, uint256 _periodLocked) public view returns(uint256 getInterest){
         require(_amountLock > 10, "amount must be greater than 10");
-        Farmer storage FM = farmers[msg.sender];
         getInterest = (_amountLock * 0.4 ether * FACTOR * _periodLocked)/ DTokenAddress.balanceOf(address(this));
     }
 

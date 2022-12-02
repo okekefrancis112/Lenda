@@ -7,9 +7,9 @@ pragma solidity 0.8.9;
     @dev Borrower must repay with an equal amount of Bmatic to acquire back their collateral
 **/
 contract BMatic {
-    string public constant name = "Borrower Matic";
-    string public constant symbol = "BMatic";
-    uint8 public constant decimals = 18;
+    string public constant TokenName = "Borrower Matic";
+    string public constant TokenSymbol = "BMatic";
+    uint8 public constant TokenDecimals = 18;
 
     mapping(address => uint256) userBalances;
 
@@ -22,7 +22,7 @@ contract BMatic {
         return userBalances[_addr];
     }
 
-    function burn(address _addr, uint256 _amount) internal {
+    function burnBMatic(address _addr, uint256 _amount) internal {
         userBalances[_addr] -= _amount;
     }
 }
