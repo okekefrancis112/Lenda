@@ -2,7 +2,7 @@
 
 ## Description
 
-This repository contains the smart contracts source code for Lenda Lending Protocol. The repository uses Hardhat as development enviroment for compilation, testing and deployment tasks.
+This repository contains the smart contracts source code for Lenda Lending Protocol. The repository uses Hardhat as development environment for compilation, testing and deployment tasks.
 
 Lenda is a simple but powerful decentralized NFT lending protocol where users can participate as depositors or borrowers. Depositors provide liquidity to the market to earn a passive income, while borrowers are able to borrow in an overcollateralized fashion, using NFTs as collateral.
 
