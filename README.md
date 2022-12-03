@@ -65,7 +65,7 @@ hardhat,
 **We detail the core contracts in the Lenda protocol.**
 
 ### Lendpool: 
-  This contract holds logic enable NFT owners create a loan, repay a loan, Set Intreest Rate, Interest rate, Interest Accrued, check If NFT Is Available, set NFT to be supported 
+  This contract holds logic enable NFT owners create a loan, repay a loan, Set Interest Rate, Interest rate, Interest Accrued, check If NFT Is Available, set NFT to be supported 
 
   https://mumbai.polygonscan.com/address/0x5e3886c7fbc5e06B1506357108cF8888d07B41a2#code
 
