@@ -64,9 +64,11 @@ This contract holds logic enable NFT owners create a loan, repay a loan
 
 https://mumbai.polygonscan.com/address/0x5e3886c7fbc5e06B1506357108cF8888d07B41a2#code
 
-### DepositorToken (DetToken)
+### DepositorToken (Lenda)
 
 This contract holds logic of the depositor token
+
+https://mumbai.polygonscan.com/address/0x20Cbc4f9070010e03C53Ae863D9a083f65Ed97C9#code
 
 ### BorrowerToken (BMatic)
 
@@ -89,3 +91,16 @@ This contract holds logic which is used to get the onchain data of NFT floor pri
 ### NftCollateral storage
 
 This contract is responsible for holding borrowers collateral
+
+## List of contract addresses of allowed NFTs
+
+https://mumbai.polygonscan.com/address/0xB72705c99DF57aE0B4aedD0B20a69D809db9136E "cryptopunks"
+https://mumbai.polygonscan.com/address/0xB50285433aAda7261A8F518E25128Ee0ED1DFcA2 "Azuki"
+https://mumbai.polygonscan.com/address/0x6730E0C8910218d64DEf48Dc0434f41CAe2F3630 "BoredApeYachtClub"
+https://mumbai.polygonscan.com/address/0x2243DD81C21ad104DBe6D3e12CfC9e3db38A4932 "CloneX"
+https://mumbai.polygonscan.com/address/0xf150f26D794e3d1129dD4c2AF356Da1a76dDeDaE "Cool Cats"
+https://mumbai.polygonscan.com/address/0xd17bFB32Fe23e731f4Aa23D87686aA29c01aCCC6 "Cryptoadz"
+https://mumbai.polygonscan.com/address/0xde0b1D6d5c39f9b64C439dB6B0F8B116Ea9F818f "Doodles"
+https://mumbai.polygonscan.com/address/0xcEE4593b3Abd20D75B421F34D93e45F838311C28 "MutantApeYachtClub"
+https://mumbai.polygonscan.com/address/0x4a0039c8D8C54A25Ebc718e278613921E938720D "VeeFriends"
+https://mumbai.polygonscan.com/address/0xE35546d6418f206DE55eC67b4BCEF010322B8C50 "World of Women"
