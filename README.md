@@ -49,7 +49,7 @@ wagmi
 
 ## Roadmap
 
-**See the for a list of proposed features (and known issues).** [open issues](https://github.com/github_username/repo_name/issues)
+**See the for a list of proposed features (and known issues).** [open issues](https://github.com/okekefrancis112/Lenda/issues)
 
 ## Team
 
