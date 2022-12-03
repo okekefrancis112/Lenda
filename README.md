@@ -26,7 +26,7 @@ yarn run dev
 
 # List of Packages
 
-Dependencies are managed through package.json\. In that file you'll find two sections:\*\*
+**Dependencies are managed through package.json**
 
 @nomicfoundation/hardhat-toolbox,
 hardhat,
@@ -34,7 +34,7 @@ hardhat,
 
 ## Contributing
 
-**Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated** 
+**Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated** **
 
 
 > 1 Fork the Project
