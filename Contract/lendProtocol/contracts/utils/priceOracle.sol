@@ -17,7 +17,7 @@ contract PriceOracle is Ownable {
     ==================================
 */
 
-    mapping(IERC721 => uint256) setFloorPrice;
+    mapping(IERC721 => uint256) public setFloorPrice;
 
     // AggregatorV3Interface internal nftFloorPriceFeed;
     AggregatorV3Interface internal ethpriceFeed;
