@@ -28,24 +28,24 @@ yarn run dev
 
 **Dependencies are managed through package.json**
 
-@nomicfoundation/hardhat-toolbox,
-hardhat,
+@nomicfoundation/hardhat,
 @openzeppelin/contracts,
+ethers,
+wagmi
 
 ## Contributing
 
-**Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated** **
-
+**Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated\*\* \*\*
 
 > 1 Fork the Project
 
-> 2 Create your Feature Branch (\*\***git checkout -b feature/AmazingFeature\***\*)**
+> 2 Create your Feature Branch (\*\***git checkout -b feature/AmazingFeature\***\*)\*\*
 
-> 3 Commit your Changes (\*\***git commit -m 'Add some AmazingFeature'\***\*)**
+> 3 Commit your Changes (\*\***git commit -m 'Add some AmazingFeature'\***\*)\*\*
 
-> 4 Push to the Branch (\*\***git push origin feature/AmazingFeature\***\*)**
+> 4 Push to the Branch (\*\***git push origin feature/AmazingFeature\***\*)\*\*
 
-> 5 Open a Pull Request**
+> 5 Open a Pull Request\*\*
 
 ## Roadmap
 
@@ -59,39 +59,38 @@ hardhat,
 > @AspireDev
 > @Dave
 
-
 ## Contract Architecture
 
 **We detail the core contracts in the Lenda protocol.**
 
-### Lendpool: 
-  This contract holds logic enable NFT owners create a loan, repay a loan, Set Interest Rate, Interest rate, Interest Accrued, check If NFT Is Available, set NFT to be supported 
+### Lendpool:
 
-  https://mumbai.polygonscan.com/address/0x5e3886c7fbc5e06B1506357108cF8888d07B41a2#code
+This contract holds logic enable NFT owners create a loan, repay a loan
+
+https://mumbai.polygonscan.com/address/0x5e3886c7fbc5e06B1506357108cF8888d07B41a2#code
 
 ### DepositorToken (DetToken)
-  This contract holds logic of the depositor token
 
+This contract holds logic of the depositor token
 
 ### BorrowerToken (BMatic)
-  This contract has the logic of the token is pegged to the amount a borrower borrowed with the interest accrued. Borrower must repay with an equal amount of Bmatic to acquire back their collateral
 
-
+This contract holds the logic of the token is pegged to the amount a borrower borrowed with the interest accrued. Borrower must repay with an equal amount of Bmatic to acquire back their collateral
 
 ### Yield
-  This contract holds logic used to incentivize users, 0.4LND is minted per seconds which is shared among all farmers that locked their DMatic token. Farmers can check the possible amount of LND they will receive base on their DMatic locked
 
-  https://mumbai.polygonscan.com/address/0x3B6871FC9BfBf0b53eB7f4FDC78059b54c4e0525#code
+This contract holds logic used to incentivize users, 0.4LND is minted per seconds which is shared among all farmers that locked their DMatic token. Farmers can check the possible amount of LND they will receive base on their DMatic locked
+
+https://mumbai.polygonscan.com/address/0x3B6871FC9BfBf0b53eB7f4FDC78059b54c4e0525#code
 
 ### Reserve
-  This contract is responsible for holding matic deposit of depositors/lenders
 
+This contract holds the logic responsible for holding matic deposit of depositors/lenders
 
 ### PriceOracle
-  This contract holds logic which is used to get the onchain data of NFT floor price across all NFT platforms. To deduce Lenda NFT worth
 
+This contract holds logic which is used to get the onchain data of NFT floor price across all NFT platforms. To deduce Lenda NFT worth
 
 ### NftCollateral storage
-  This contract is responsible for holding borrowers collateral
 
-
+This contract is responsible for holding borrowers collateral
