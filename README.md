@@ -95,6 +95,3 @@ hardhat,
   This contract is responsible for holding borrowers collateral
 
 
-## License
-
-Distributed under the MIT License. See **LICENSE** for more information.
