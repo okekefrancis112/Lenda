@@ -174,7 +174,7 @@ contract LendPool is LendaReserve, PriceOracle, BMatic{
   }
 
   function activeCollection(address _nftContractAddress) public view returns(uint256) {
-    CollateralStorage.valueInReserve(_nftContractAddress);
+    return CollateralStorage.valueInReserve(_nftContractAddress);
   }
 }
 
