@@ -52,20 +52,18 @@ hardhat,
 **See the for a list of proposed features (and known issues).** [open issues](https://github.com/github_username/repo_name/issues)
 
 ## Team
-@OC
-@Kayzee
-@CodeBlooded
-@AspireDev
-@Dave
+
+> @Kayzee
+> @CodeBlooded
+> @OC
+> @AspireDev
+> @Dave
 
 
 ## Contract Architecture
 
-**We detail a few of the core contracts in the Lenda protocol.**
+**We detail the core contracts in the Lenda protocol.**
 
- 
- 
-list of contracts we are using, they are verified alrea
 ### Lendpool: 
   This contract holds logic enable NFT owners create a loan, repay a loan, Set Intreest Rate, Interest rate, Interest Accrued, check If NFT Is Available, set NFT to be supported 
 
