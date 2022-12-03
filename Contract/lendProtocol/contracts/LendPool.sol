@@ -82,6 +82,14 @@ contract LendPool is LendaReserve, PriceOracle, BMatic{
   ==================================
 */
 
+  function deposit(uint256 _amount, address _depositor) external {
+    depositToReserve(_amount, _depositor);
+  }
+
+  function withdraw(uint256 _amount, address _depositor) external {
+    withdrawFromReserve(_amount, _depositor);
+  }
+
   /**
    * Enables an NFT owner to create a loan, specifying parameters
    * @param _tokenAddress NFT token address
@@ -125,9 +133,9 @@ contract LendPool is LendaReserve, PriceOracle, BMatic{
   function repayLoan() external {
     Loan storage loan = Loans[msg.sender];
     require(loan._onLoan, "You don't have any loan avalable");
-    // repay(msg.sender, balanceOfBMatic(msg.sender));
+    repay(msg.sender, balanceOfBMatic(msg.sender));
     CollateralStorage.withdrawFromStorage(msg.sender, loan.tokenId, loan.tokenAddress);
-    // burnBMatic(msg.sender, balanceOfBMatic(msg.sender));
+    burnBMatic(msg.sender, balanceOfBMatic(msg.sender));
     loan._onLoan = false;
     // uint256 profitMade = loan.amountToRepay - loan.loanAmount;
   }
@@ -158,6 +166,15 @@ contract LendPool is LendaReserve, PriceOracle, BMatic{
   function setSupportedNFT(IERC721 _NFTAddress) public onlyOwner{
     assert(!checkIfNFTIsAvailable(_NFTAddress));
     supportedTokenAddress.push(_NFTAddress);
+  }
+
+
+  function getSupportedNFT() external view returns(IERC721[] memory) {
+    return supportedTokenAddress;
+  }
+
+  function activeCollection(address _nftContractAddress) public view returns(uint256) {
+    CollateralStorage.valueInReserve(_nftContractAddress);
   }
 }
 
