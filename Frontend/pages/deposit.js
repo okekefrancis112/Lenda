@@ -16,15 +16,9 @@ import {
 } from "../utils/index";
 
 export default function DepositPage() {
-  const [amount, setAmount] = React.useState(null);
+  const [amount, setAmount] = React.useState("");
   const [loading, setLoading] = React.useState(false);
-  //   const {
-  //     data: walletBalance,
 
-  //   } = useBalance({
-  //     // address: "0x74d68b3c83ED72Da304dc4b7F8A25696CC11411a",
-  //     address: "0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0",
-  //   });
   const { address, isDisconnected, isConnected } = useAccount();
 
   const {

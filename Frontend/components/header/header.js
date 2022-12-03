@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import styles from "../../styles/Header.module.css";
 import { FaAngleDown } from "react-icons/fa";
+import { IoMdContact } from "react-icons//io";
 import Link from "next/link";
 import { CustomBtn } from "../customBtn/customBtn";
 import { CgClose } from "react-icons/cg";
@@ -14,7 +15,7 @@ const navItems = [
 
   {
     title: "Liquidity",
-    path: "/resources",
+    path: "/",
     subs: [
       {
         title: "Deposit Matic",
@@ -40,7 +41,7 @@ const navItems = [
   },
   {
     title: "Community",
-    path: "/community",
+    path: "/",
     subs: [
       {
         title: "Twitter",
@@ -66,7 +67,7 @@ const navItems = [
   },
   {
     title: "Products",
-    path: "/products",
+    path: "/",
     subs: [
       {
         title: "Lend protocol",
@@ -80,7 +81,7 @@ const navItems = [
   },
   {
     title: "Auctions",
-    path: "/auctions",
+    path: "/",
     subs: [
       {
         title: "Health factor alert list",
@@ -144,7 +145,13 @@ const Header = () => {
             })}
           </ul>
 
-          <CustomBtn />
+          <div className="flex gap-2 items-center">
+            <Link href="/dashboard">
+              <IoMdContact fontSize={25} />
+            </Link>
+
+            <CustomBtn />
+          </div>
         </div>
       </div>
 

@@ -4,11 +4,19 @@ import Footer from "../components/footer/footer";
 import Header from "../components/header/header";
 import "@rainbow-me/rainbowkit/styles.css";
 import { getDefaultWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit";
-import {chain, configureChains, createClient, useAccount, WagmiConfig} from "wagmi";
+import {
+  chain,
+  configureChains,
+  createClient,
+  useAccount,
+  WagmiConfig,
+} from "wagmi";
 import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
 import "../styles/globals.css";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-const alchemyId = process.env.NEXT_PUBLIC_ALCELMY_ID;
+const alchemyId = process.env.NEXT_PUBLIC_ALCHELMY_ID;
 
 const { chains, provider } = configureChains(
   [chain.polygonMumbai],
@@ -33,9 +41,8 @@ const wagmiClient = createClient({
   provider,
 });
 
-
 function MyApp({ Component, pageProps }) {
-  const {address, isConnected } = useAccount()
+  const { address, isConnected } = useAccount();
 
   return (
     <>
@@ -44,6 +51,8 @@ function MyApp({ Component, pageProps }) {
           <ChakraProvider>
             <div className="bg-darkNavyBlue">
               <Header />
+              <ToastContainer />
+
               <Component {...pageProps} />
               <Footer />
             </div>
