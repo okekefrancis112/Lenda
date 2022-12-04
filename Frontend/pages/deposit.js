@@ -65,8 +65,8 @@ export default function DepositPage() {
   } = useContractWrite({
     mode: "recklesslyUnprepared",
     ...LENDA_CONTRACT,
-    functionName: "depositFor",
-    args: [address, ethers.utils.parseEther(amount ? amount.toString() : "0")],
+    functionName: "deposit",
+    args: [ethers.utils.parseEther(amount ? amount.toString() : "0"), address],
     onSuccess() {
       setAmount(0);
       toast.success(`${amount} mMATIC Deposited successfully`, {

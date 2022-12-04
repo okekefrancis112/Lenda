@@ -9,6 +9,7 @@ import {
   useContractRead,
   useWaitForTransaction,
 } from "wagmi";
+import { ethers } from "ethers";
 
 import { InjectedConnector } from "wagmi/connectors/injected";
 import { LENDA_CONTRACT, LENDPOOL_ADDRESS } from "../utils/index";
@@ -80,8 +81,15 @@ export default function BorrowPage() {
       requestData.tokenAddress,
       requestData.tokenId,
       requestData.loanCompleteTime,
-      requestData.amountToBorrow,
+      ethers.utils.parseEther(
+        requestData.amountToBorrow ? requestData.amountToBorrow.toString() : "0"
+      ),
     ],
+    onSuccess() {
+      toast.success(`Successfully borrowed ${requestData.amountToBorrow}`, {
+        position: toast.POSITION.TOP_CENTER,
+      });
+    },
     onError(error) {
       console.log("Error", error);
     },

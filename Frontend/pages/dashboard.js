@@ -1,10 +1,23 @@
 import { MdPayments } from "react-icons/md";
 import { GiMoneyStack } from "react-icons/gi";
-import { useAccount, useContractRead } from "wagmi";
-import { LENDA_CONTRACT } from "../utils/index";
+import {
+  useAccount,
+  useContractRead,
+  useContractWrite,
+  useWaitForTransaction,
+} from "wagmi";
+import {
+  LENDA_CONTRACT,
+  mMATIC_CONTRACT,
+  LENDPOOL_ADDRESS,
+} from "../utils/index";
 import { useRouter } from "next/router";
+import React from "react";
+import { ethers } from "ethers";
+import { toast } from "react-toastify";
 
 export default function Dashboard() {
+  const [repayAmount, setRepayAmount] = React.useState("");
   const router = useRouter();
   const { address, isConnecting, isDisconnected } = useAccount();
   const {
@@ -15,6 +28,58 @@ export default function Dashboard() {
     ...LENDA_CONTRACT,
     functionName: "balanceOf",
     args: [address],
+  });
+
+  const { data: borrowedBal } = useContractRead({
+    ...LENDA_CONTRACT,
+    functionName: "balanceOfBMatic",
+    args: [address],
+    onSuccess(data) {
+      console.log("Success", data);
+      setRepayAmount(borrowedBal);
+    },
+  });
+
+  const {
+    data: approveTokenData,
+    isLoading: approveLoading,
+    isSuccess: approvalSuccess,
+    write: approveRepay,
+  } = useContractWrite({
+    mode: "recklesslyUnprepared",
+    ...mMATIC_CONTRACT,
+    functionName: "approve",
+    args: [
+      LENDPOOL_ADDRESS,
+      //   ethers.utils.parseEther(amount ? amount.toString() : "0"),
+      ethers.utils.parseEther(repayAmount ? repayAmount.toString() : "0"),
+    ],
+  });
+
+  const { isLoading: approvalWaitLoading } = useWaitForTransaction({
+    hash: approveTokenData?.hash,
+    onSuccess() {
+      repay();
+    },
+    onError(data) {
+      console.log(data);
+    },
+  });
+
+  const {
+    data,
+    isLoading: loadingRepay,
+    isSuccess: repaySuccess,
+    write: repay,
+  } = useContractWrite({
+    mode: "recklesslyUnprepared",
+    ...LENDA_CONTRACT,
+    functionName: "repayLoan",
+    onSuccess() {
+      toast.success(`Successfully repaid load`, {
+        position: toast.POSITION.TOP_CENTER,
+      });
+    },
   });
 
   console.log(totalBal?.toString());
@@ -56,8 +121,26 @@ export default function Dashboard() {
             </div>
             <div>
               <p>
-                Total Debt: <span>100 MATIC</span>
+                Total Balance:{" "}
+                <span>{borrowedBal?.toString() / 1e18} MATIC</span>
               </p>
+            </div>
+            <div className="flex gap-5 mt-8">
+              <button
+                className="w-full bg-purple px-3 py-2"
+                onClick={() => {
+                  approveRepay?.();
+                }}
+                disabled={
+                  isDisconnected ||
+                  isConnecting ||
+                  loadingRepay ||
+                  approvalWaitLoading ||
+                  approveLoading
+                }
+              >
+                Repay Loan
+              </button>
             </div>
           </div>
         </div>
