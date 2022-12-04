@@ -24,7 +24,7 @@ library CollateralStorage{
         _nftContractAddress.transferFrom(address(this), _depositor, _tokenId);
     }
 
-    function valueInReserve(address _nftContractAddress) public view returns(uint256) {
+    function valueInReserve(address _nftContractAddress) internal view returns(uint256) {
         return IERC721(_nftContractAddress).balanceOf(address(this));
     }
 }

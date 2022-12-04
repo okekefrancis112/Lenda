@@ -41,7 +41,7 @@ export default function BorrowPage() {
   const [requestData, setRequestData] = useState({
     tokenAddress: "",
     tokenId: "",
-    loanCompleteTime: 7,
+    loanCompleteTime: "",
     amountToBorrow: "",
   });
 
@@ -177,6 +177,7 @@ export default function BorrowPage() {
           <input
             type="number"
             className={styles.input}
+            placeholder="Amount to borrow"
             value={requestData.amountToBorrow}
             onChange={(e) =>
               setRequestData({
@@ -185,6 +186,18 @@ export default function BorrowPage() {
               })
             }
           />
+          <input
+            type="number"
+            className={styles.input}
+            placeholder="Number of Days"
+            value={requestData.loanCompleteTime}
+            onChange={(e) =>
+                setRequestData({
+                  ...requestData,
+                loanCompleteTime: Number(e.target.value),
+            })
+          }
+            />
           {isConnected ? (
             <button
               className="bg-[#7d5bd6] w-full font-bold py-3 rounded-md text-[20px] blur-[0.5px] brightness-125"

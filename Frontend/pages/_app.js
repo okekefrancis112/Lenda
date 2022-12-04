@@ -16,7 +16,7 @@ import "../styles/globals.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const alchemyId = process.env.NEXT_PUBLIC_ALCHELMY_ID;
+const alchemyId = "Lc4674R5HyssxRE0VPhmqCHOmWit27LW";
 
 const { chains, provider } = configureChains(
   [chain.polygonMumbai],

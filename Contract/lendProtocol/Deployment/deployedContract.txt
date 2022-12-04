@@ -1,4 +1,4 @@
-Lendpool is deployed to 0x24F1D4ed95217C41639FB8C6951bf6aBd6cB5361
-Yield Contract is deployed to 0x0CEC7ed7C80901B6cCF8524a911DBcEa696C6376
-Matic contract address is deployed to 0x5d1074B6E64bc15A1F587b78b37c5f1a0df0e723
-Lenda toke is deployed to 0xaa70491DDFBD53e781220483296E8466e8d8EaD4
+Lendpool is deployed to 0x81d97e1D5cd8abA2CFC93CD469100f2ad52927c5
+Yield Contract is deployed to 0xCA3529CD293BF6B3d604193F36f9604f91D11d5c
+Matic contract address is deployed to 0x7B23BecFD69B6a514E311d351358b0E658Ed1421
+Lenda toke is deployed to 0x20Cbc4f9070010e03C53Ae863D9a083f65Ed97C9
