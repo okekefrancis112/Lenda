@@ -103,12 +103,41 @@ This contract is responsible for holding borrowers collateral
 ## List of contract addresses of allowed NFTs
 
 https://mumbai.polygonscan.com/address/0xB72705c99DF57aE0B4aedD0B20a69D809db9136E "cryptopunks"
+
+https://gateway.pinata.cloud/ipfs/Qmboh4dbuKusyfYbJdbqXwY5cLNWMcM8Q65nZk11modLnc
+
 https://mumbai.polygonscan.com/address/0xB50285433aAda7261A8F518E25128Ee0ED1DFcA2 "Azuki"
+
+https://gateway.pinata.cloud/ipfs/QmXqDU5mrC1mpX9PvawV6dpwV13kVWrHgrLbxA6WYVp9cg
+
 https://mumbai.polygonscan.com/address/0x6730E0C8910218d64DEf48Dc0434f41CAe2F3630 "BoredApeYachtClub"
+
+https://gateway.pinata.cloud/ipfs/QmU46CbWShYjfDHKR59udtbqjKtLfNeYP28ovowt51RQL5
+
 https://mumbai.polygonscan.com/address/0x2243DD81C21ad104DBe6D3e12CfC9e3db38A4932 "CloneX"
+
+https://gateway.pinata.cloud/ipfs/Qma4yTxsptYsyeebDVkdymgAXj1pzZCEQyvT8WRaKvzfhN
+
 https://mumbai.polygonscan.com/address/0xf150f26D794e3d1129dD4c2AF356Da1a76dDeDaE "Cool Cats"
+
+https://gateway.pinata.cloud/ipfs/QmepETVdZvjQw2ou3G483JQ9386J8nc7UjCAKYN1ZTz7xH
+
 https://mumbai.polygonscan.com/address/0xd17bFB32Fe23e731f4Aa23D87686aA29c01aCCC6 "Cryptoadz"
+
+https://gateway.pinata.cloud/ipfs/Qme8euKZjziaq2D9ES2XGrEJQMArNnZVNCHvc5eRyvFbTu
+
 https://mumbai.polygonscan.com/address/0xde0b1D6d5c39f9b64C439dB6B0F8B116Ea9F818f "Doodles"
+
+https://gateway.pinata.cloud/ipfs/QmYeoWJQ9wHsJCxujkRKykGJ99LSVF7nriLkrmGc1vuBRj
+
 https://mumbai.polygonscan.com/address/0xcEE4593b3Abd20D75B421F34D93e45F838311C28 "MutantApeYachtClub"
+
+https://gateway.pinata.cloud/ipfs/QmQQgrL8J2doZbUXibjPQnGZgjMfaDRJD3ZzkbiHhD86ok
+
 https://mumbai.polygonscan.com/address/0x4a0039c8D8C54A25Ebc718e278613921E938720D "VeeFriends"
+
+https://gateway.pinata.cloud/ipfs/QmWrm8hBp9vKUadayBuNEz6F8G2oSKgTHGrXiewUmePW1Q
+
+https://gateway.pinata.cloud/ipfs/QmZmhPD9GHF4SCism94hbxXjrM53TTG1ugXhX9E3e47krk
+
 https://mumbai.polygonscan.com/address/0xE35546d6418f206DE55eC67b4BCEF010322B8C50 "World of Women"
