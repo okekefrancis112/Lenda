@@ -8,34 +8,28 @@ const HowItWorks = () => {
       <h2 className="text-center mb-6 text-white text-3xl font-bold">
         How It Works
       </h2>
-      <div className="flex flex-col md:flex-row justify-between text-white gap-10">
-        <div className="text-center flex flex-col items-center">
+      <div className="flex flex-col md:flex-row justify-between items-center text-white gap-10">
+        <div className="w-full md:w-1/3 text-center flex flex-col items-center px-0 md:px-5">
           <VscDebugDisconnect color="white" fontSize={30} />
           <h3 className="text-2xl font-medium text-[21px] mt-2">Connect</h3>
           <p className="text-[#ccc] text-[15px]">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim{" "}
+            Connect wallet and explore untapped capabilities of your NFTs.
           </p>
         </div>
-        <div className="text-center flex flex-col items-center">
+        <div className="w-full md:w-1/3 text-center flex flex-col items-center px-0 md:px-5">
           <CgSelectO fontSize={30} />
-          <h3 className="text-2xl font-medium text-[21px] mt-2">
-            Check products
-          </h3>
+          <h3 className="text-2xl font-medium text-[21px] mt-2">Deposit</h3>
           <p className="text-[#ccc] text-[15px]">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim{" "}
+            Earn 9% ROI when you deposit on the platform. Grow your funds with
+            us
           </p>
         </div>
-        <div className="text-center flex flex-col items-center">
+        <div className="w-full md:w-1/3 text-center flex flex-col items-center px-0 md:px-5">
           <BsCheckCircle fontSize={30} />
-          <h3 className="text-2xl font-medium text-[21px] mt-2">Select item</h3>
+          <h3 className="text-2xl font-medium text-[21px] mt-2">Loan</h3>
           <p className="text-[#ccc] text-[15px]">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim{" "}
+            Selected NFTs are available as collateral. Use your NFT as
+            collateral and get specifiedd loam amount.
           </p>
         </div>
       </div>
