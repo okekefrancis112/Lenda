@@ -107,16 +107,16 @@ contract LendPool is LendaReserve, PriceOracle, BMatic{
   ) external{
     Loan storage loan = Loans[msg.sender];
     require(!loan._onLoan, "Pay your debt first");
-    require((_loanCompleteTime * 1 days) < 30 days, "Can't issue a loan beyond 30 days");
-    assert((_loanCompleteTime * 1 days) > block.timestamp);
+    require(_loanCompleteTime * 1 days + block.timestamp < 30 days + block.timestamp, "Can't issue a loan beyond 30 days");
+    assert(_loanCompleteTime * 1 days + block.timestamp > block.timestamp);
     require(supportedNFTAddress[_tokenAddress] == true, "NFT no supported");
     if(_amountToBorrow > availableToBorrow(_tokenAddress)) revert amountExceeded("exceeded available to borrow");
     loan.tokenAddress = _tokenAddress;
     loan.tokenId = _tokenId;
     loan.loanAmount = _amountToBorrow;
-    loan.loanCompleteTime = _loanCompleteTime * 1 days;
+    loan.loanCompleteTime = _loanCompleteTime * 1 days + block.timestamp;
     loan.timeOfLoan = block.timestamp;
-    uint256 getInterestAccrued = interestAccrued(_amountToBorrow, _loanCompleteTime, block.timestamp);
+    uint256 getInterestAccrued = interestAccrued(_amountToBorrow, loan.loanCompleteTime, block.timestamp);
     uint256 payBack = _amountToBorrow + getInterestAccrued;
     loan.amountToRepay = payBack;
     CollateralStorage.depositToStorage(msg.sender, _tokenId, _tokenAddress);

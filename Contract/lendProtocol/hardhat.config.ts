@@ -20,6 +20,7 @@ module.exports = {
     },
     mumbai: {
       url: MUMBAI_RPC_URL,
+<<<<<<< HEAD
       accounts: [PRIVATE_KEY],
       chainId: 80001,
       // blockConfirmations: 6,
@@ -29,6 +30,10 @@ module.exports = {
       accounts: [PRIVATE_KEY],
       chainId: 1,
       // blockConfirmations: 6,
+=======
+      accounts: [PRIVATE],
+      gas: 2100000
+>>>>>>> 7d16dbd (fixed bug)
     },
   },
   etherscan: {

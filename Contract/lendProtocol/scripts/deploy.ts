@@ -10,11 +10,18 @@ async function main() {
   // await matic.deployed();
 
 
-  // // Lendpool contract deployment
+  // Lendpool contract deployment
 
-  // const LendPool = await ethers.getContractFactory("LendPool");
-  // const lendpool = await LendPool.deploy("0x74d68b3c83ED72Da304dc4b7F8A25696CC11411a");
-  // await lendpool.deployed();
+  const LendPool = await ethers.getContractFactory("LendPool");
+  const lendpool = await LendPool.deploy("0x74d68b3c83ED72Da304dc4b7F8A25696CC11411a");
+  await lendpool.deployed();
+
+  // const LENDPOOL = await ethers.getContractAt("LendPool", "0x834810906804160649f0Bb04eCD400a9bd17EFcF");
+  // const lendpools = await LENDPOOL.borrowLoan("0xB50285433aAda7261A8F518E25128Ee0ED1DFcA2", 1, 21, "10000000");
+
+  // console.log(await lendpools.wait(), "result")
+
+
 
 
 
@@ -24,7 +31,7 @@ async function main() {
   // const yields = await Yield.deploy(lendpool.address);
   // await yields.deployed();
 
-  // console.log(`Lendpool is deployed to ${lendpool.address}`);
+  console.log(`Lendpool is deployed to ${lendpool.address}`);
   // console.log(`Yield Contract is deployed to ${yields.address}`);
   // console.log(`Matic contract address is deployed to ${matic.address}`);
 
@@ -41,7 +48,7 @@ async function main() {
   console.log(`verifying for lendpool contract`);
 
   await run(`verify:verify`, {
-    address: "0xd98F2dE9949047bcf5647440f5A1c2114D315e94",
+    address: "0xD287cc4B99cA787c0d7F949deD9961531aEda71E",
     constructorArguments: ["0x74d68b3c83ED72Da304dc4b7F8A25696CC11411a"],
     contract: "contracts/LendPool.sol:LendPool"
   })
