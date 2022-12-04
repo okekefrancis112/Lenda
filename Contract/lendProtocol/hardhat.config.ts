@@ -1,5 +1,6 @@
 require("dotenv").config({path: ".env"});
 import "@nomiclabs/hardhat-ethers";
+import "@nomiclabs/hardhat-etherscan";
 
 
 const MUMBAI_RPC_URL = process.env.ALCHEMY_MUMBAI_RPC_URL;
@@ -23,5 +24,5 @@ module.exports = {
   },
   etherscan: {
     apiKey: POLYGONSCAN_API_KEY
-  }
+  },
 }
