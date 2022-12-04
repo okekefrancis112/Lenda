@@ -1,4 +1,63 @@
+import { useEffect, useState } from "react";
+import styles from "../styles/Borrow.module.css";
+
+import {
+  useAccount,
+  useConnect,
+  useContractWrite,
+  useDisconnect,
+  useContractRead, useWaitForTransaction,
+} from "wagmi";
+
+import { InjectedConnector } from "wagmi/connectors/injected";
+import {YIELD_ADDRESS} from "../utils/index";
+import axios from "axios";
+import {ethers} from "ethers";
+
 export default function Yield() {
+  const [ lockDmaticModal, setLockDmaticModal] = useState(false)
+
+  const [tokenAmount, setTokenAmount] = useState()
+  const [lockDays, setLockDays] = useState()
+  const [loading, setLoading]  = useState()
+  const { address, isDisconnected, isConnected } = useAccount()
+
+  const {
+    data: lockDtoken,
+    isError,
+    isSuccess: lockDtokenSuccess,
+    isLoading: loadinglockDtoken,
+      write: lockDmatic
+  } = useContractWrite({
+    mode: "recklesslyUnprepared",
+    ...YIELD_ADDRESS,
+    functionName: "lockDTokenForLND",
+    args: [tokenAmount, lockDays],
+  });
+
+  const {
+    data,
+    isSuccess,
+    isLoading,
+    write: withdrawToken
+  } = useContractWrite({
+        mode: "recklesslyUnprepared",
+        ...YIELD_ADDRESS,
+        functionName: "withdrawLockedToken",
+        args:[]
+      }
+
+  )
+
+  // const { isLoading: lockDtokenLoading } = useWaitForTransaction(
+  //     hash: lockDtoken?.hash,
+  //     onSuccess()
+  // )
+
+  // const handleLock = async () =>{
+  //   lockDmatic()
+  // }
+
   return (
     <div>
       <div className="max-w-[1300px] mx-auto text-white px-10 mt-10">
@@ -35,9 +94,60 @@ export default function Yield() {
           </div>
 
           <div className="flex mx-auto">
-            <button className="bg-white px-16 py-2 mx-auto text-[#000] mt-5">
-              Lock MATIC
-            </button>
+            <div className="justify-center items-center flex">
+              <div className="relative w-auto my-6 mx-auto max-w-3xl">
+                {/*content*/}
+                <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
+                  {/*header*/}
+                  <div className="flex items-start justify-between p-5 border-b border-solid border-slate-200 rounded-t">
+                    <h3 className="text-3xl font-semibold text-black">
+                      Lock Dmatic Token
+                    </h3>
+                    <button
+                        className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none">
+                    <span className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
+                      ×
+                    </span>
+                    </button>
+                  </div>
+                  <form className={styles.form}>
+                    {/*body*/}
+                    <div className="relative p-6 flex-auto">
+                      <input
+                          className={styles.input}
+                          placeholder="Amount"
+                          value={tokenAmount}
+                          onChange={(e) => setTokenAmount(e.target.value)}
+                      />
+                      <input
+                          className={styles.input}
+                          placeholder="No of Days"
+                          value={lockDays}
+                          onChange={(e) => setLockDays(e.target.value)}
+                      />
+                    </div>
+                    {/*footer*/}
+                    <div className="flex items-center justify-end p-6 border-t border-solid border-slate-200 rounded-b">
+                      <button
+                          className="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                          type="button"
+                          onClick={() => lockDmatic?.()}
+                      >
+                        Lock Token
+                      </button>
+
+                      <button
+                          className="bg-amber-700 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                          type="button"
+                          onClick={() => withdrawToken?.()}
+                      >
+                        Withdraw Token
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

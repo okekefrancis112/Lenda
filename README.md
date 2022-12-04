@@ -53,6 +53,9 @@ yarn run dev
 > @OC
 > @AspireDev
 > @Dave
+## Architecture Overview
+Users of the Lenda protocol which are either the depositors or  borrowers interact with one another, the depositors deposit into the reserve contract and the borrowers can then take a loan from using a list of blue chip NFTs to be used as collateral for the position from the assets in reserve contract. When depositors deposit using the protocol,they are given DMatic which can then be staked in the yield contract to earn LND which can be used as passive income since the Token will be liquidity backed and transferable. This way the depositors are also earning from the interest accrued by the Borrower 
+
 
 ## Contract Architecture
 

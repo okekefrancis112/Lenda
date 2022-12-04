@@ -58,7 +58,7 @@ export const CustomBtn = () => {
 
               return (
                 <div style={{ display: "flex", gap: 12 }}>
-                  <button
+                  {/* <button
                     onClick={openChainModal}
                     style={{ display: "flex", alignItems: "center" }}
                     type="button"
@@ -84,7 +84,7 @@ export const CustomBtn = () => {
                       </div>
                     )}
                     {chain.name}
-                  </button>
+                  </button> */}
 
                   <button onClick={openAccountModal} type="button">
                     {account.displayName}
