@@ -21,10 +21,10 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-[70vh]">
-      <div className="max-w-[800px] mx-auto mt-12">
+      <div className="max-w-[800px] mx-auto mt-12 px-5">
         <h1 className="text-white text-2xl font-bold mb-5">Dashboard</h1>
-        <div className="flex gap-5 text-white">
-          <div className="w-1/2 bg-navyBlue p-5 rounded-md">
+        <div className="flex flex-col md:flex-row gap-5 text-white ">
+          <div className="w-full md:w-1/2 bg-navyBlue p-5 rounded-md">
             <div className="flex gap-4">
               <GiMoneyStack color="white" fontSize={25} />
               <span className="font-bold">My Deposits</span>
@@ -49,7 +49,7 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
-          <div className="w-1/2 bg-navyBlue p-5 rounded-md">
+          <div className="w-full md:w-1/2 bg-navyBlue p-5 rounded-md">
             <div className="flex gap-4">
               <MdPayments color="white" fontSize={25} />
               <span className="font-bold">My Borrows</span>

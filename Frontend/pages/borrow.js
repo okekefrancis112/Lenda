@@ -1,6 +1,6 @@
 import styles from "../styles/Borrow.module.css";
 import Select from "react-select";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   useAccount,
   useConnect,
@@ -71,6 +71,7 @@ export default function BorrowPage() {
     isLoading: borrowLoading,
     isSuccess: borrowSuccess,
     write: writeBorrow,
+    error,
   } = useContractWrite({
     mode: "recklesslyUnprepared",
     ...LENDA_CONTRACT,
@@ -81,6 +82,9 @@ export default function BorrowPage() {
       requestData.loanCompleteTime,
       requestData.amountToBorrow,
     ],
+    onError(error) {
+      console.log("Error", error);
+    },
   });
 
   const {
@@ -92,31 +96,47 @@ export default function BorrowPage() {
     mode: "recklesslyUnprepared",
     address: requestData.tokenAddress,
     abi: nftAbi,
-    functionName: "setApprovalForAll",
-    args: [LENDPOOL_ADDRESS, true],
+    functionName: "approve",
+    args: [LENDPOOL_ADDRESS, requestData.tokenId],
     onSuccess(data) {
       console.log("it was successful");
     },
   });
 
-  console.log(approveNftData, approveNftLoading, approveSuccess);
-
   const { isLoading: approvalWaitLoading } = useWaitForTransaction({
     hash: approveNftData?.hash,
     onSuccess() {
       writeBorrow();
+      console.log("borrow called");
     },
     onError(data) {
       console.log(data);
     },
   });
 
+  console.log(
+    "approveal logs",
+    approveNftData,
+    approveNftLoading,
+    approveSuccess
+  );
+  console.log(
+    "borrow logs",
+    borrowLoanData,
+    borrowLoading,
+    borrowSuccess,
+    error
+  );
+
+  console.log("approvalWaitLoading", approvalWaitLoading);
+
   const fetchTokenId = async () => {
     try {
       const res = await axios.get(
         `https://polygon-mumbai.g.alchemy.com/nft/v2/HBGpARZ7rjn6Iot1A6UkBgFeDzn6IGYH/getNFTs/?owner=${address}&contractAddresses[]=${selectedOption?.value}`
       );
-      console.log(Number(res?.data?.ownedNfts[0]?.id?.tokenId));
+      // console.log(Number(res?.data?.ownedNfts[0]?.id?.tokenId));
+      // console.log(res?.data?.ownedNfts[0]?.id?.tokenId);
 
       setRequestData({
         ...requestData,
@@ -125,6 +145,17 @@ export default function BorrowPage() {
           : "",
         tokenAddress: selectedOption?.value,
       });
+
+      const selectedNFT = options.filter(
+        (nft) => nft.value === selectedOption?.value
+      );
+      // console.log(selectedNFT);
+
+      if (res?.data?.ownedNfts[0]?.id?.tokenId === undefined) {
+        toast.error(`You do not own any ${selectedNFT[0].label} NFT`, {
+          position: toast.POSITION.TOP_CENTER,
+        });
+      }
     } catch (err) {
       console.log(err);
     }
@@ -135,16 +166,16 @@ export default function BorrowPage() {
   }, [selectedOption]);
 
   // console.log(selectedOption.value);
-  console.log(data?.toString());
-  console.log(LENDA_CONTRACT);
-  console.log(isLoading, isSuccess);
+  // console.log(data?.toString());
+  // console.log(LENDA_CONTRACT);
+  // console.log(isLoading, isSuccess);
 
-  console.log(selectedOption);
-  console.log(availableToBorrow);
+  // console.log(selectedOption);
+  // console.log(availableToBorrow);
 
   const handleBorrow = (e) => {
     e.preventDefault();
-    console.log(requestData);
+    // console.log(requestData);
 
     if (
       requestData.tokenAddress !== "" &&
@@ -159,20 +190,22 @@ export default function BorrowPage() {
     // approveNft();
   };
 
-  console.log(borrowLoanData, borrowLoading, borrowSuccess);
+  // console.log(borrowLoanData, borrowLoading, borrowSuccess);
+
+  console.log(requestData);
 
   return (
-    <div className="min-h-[70vh]">
-      <div className=" w-[450px] mx-auto bg-navyBlue px-4 py-3 pb-10 mt-10 mb-20 rounded-xl">
+    <div className="min-h-[70vh] px-5">
+      <div className="max-w-[450px] mx-auto bg-navyBlue px-4 py-3 pb-10 mt-10 mb-20 rounded-xl">
         <form className={styles.form}>
-          <h2 className="py-2 text-white text-2xl font-bold mb-2">Lend</h2>
+          <h2 className="py-2 text-white text-2xl font-bold mb-2">Borrow</h2>
           <Select
             value={selectedOption}
             onChange={setSelectedOption}
             options={options}
           />
           <span className="text-white">
-            Available to borrow: {availableToBorrow}
+            Available to borrow : {availableToBorrow}
           </span>
           <input
             type="number"

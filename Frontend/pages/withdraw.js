@@ -31,10 +31,11 @@ export default function Withdraw() {
     args: [ethers.utils.parseEther(amount ? amount.toString() : "0"), address],
     onSuccess(data) {
       setAmount(0);
-      toast.success(`${amount} mMATIC Deposited successfully`, {
+      toast.success(`${amount} mMATIC has been transferred to your wallet`, {
         position: toast.POSITION.TOP_CENTER,
       });
       refetchBal();
+      console.log("hugiyutfdyr");
     },
   });
 
@@ -43,7 +44,7 @@ export default function Withdraw() {
   };
 
   return (
-    <div className="min-h-[60vh] mt-10">
+    <div className="min-h-[60vh] mt-10 px-5">
       <div className="max-w-[500px] mx-auto rounded-md">
         <p className="text-white mb-3 text-3xl">Withdraw mMatic</p>
         <div className="text-white px-5 py-5 bg-navyBlue mb-2">
