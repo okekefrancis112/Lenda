@@ -16,7 +16,7 @@ library CollateralStorage{
 
     function depositToStorage(address _depositor, uint256 _tokenId, IERC721 _nftContractAddress) internal {
         IERC721 nftContractAddress = _nftContractAddress;
-        if(nftContractAddress.isApprovedForAll(_depositor, address(this)) != true) revert mustApproved("must approve to spend");
+        if(nftContractAddress.getApproved(_tokenId) != address(this)) revert mustApproved("must approve to spend");
         nftContractAddress.transferFrom(_depositor, address(this), _tokenId);
     }
 
