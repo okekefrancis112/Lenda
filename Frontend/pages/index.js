@@ -1,13 +1,18 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
-import Footer from "../components/footer/footer";
-import Header from "../components/header/header";
 import CollectionSection from "../components/home/collection";
 import HowItWorks from "../components/home/how-it-works";
 import ReserveSection from "../components/home/reserve";
+import { useAccount } from "wagmi";
 
 export default function Home() {
   const router = useRouter();
+  const { address, isConnecting, isDisconnected } = useAccount();
+
+  console.log("address", address);
+  console.log("isConnecting", isConnecting);
+  console.log("isDisconnected", isDisconnected);
+
   return (
     // <Head>
     //   <title>Create Next App</title>
@@ -25,7 +30,12 @@ export default function Home() {
                 earn yields instantly
               </h1>
               <div className="flex flex-col sm:flex-row gap-5 justify-center lg:justify-start">
-                <button className="bg-[#cb2d83] py-4 px-20 ">Deposit</button>
+                <button
+                  className="bg-[#cb2d83] py-4 px-20"
+                  onClick={() => router.push("/deposit")}
+                >
+                  Deposit
+                </button>
                 <button
                   className="bg-[#7e5bd6] py-2 px-20"
                   onClick={() => router.push("/borrow")}

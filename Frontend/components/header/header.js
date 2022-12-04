@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import styles from "../../styles/Header.module.css";
 import { FaAngleDown } from "react-icons/fa";
+import { IoIosContact } from "react-icons//io";
 import Link from "next/link";
 import { CustomBtn } from "../customBtn/customBtn";
 import { CgClose } from "react-icons/cg";
@@ -14,15 +15,15 @@ const navItems = [
 
   {
     title: "Liquidity",
-    path: "/resources",
+    path: "/",
     subs: [
       {
         title: "Deposit Matic",
-        path: "/",
+        path: "/deposit",
       },
       {
         title: "Borrow Matic",
-        path: "/",
+        path: "/borrow",
       },
       {
         title: "Buy NFT",
@@ -40,7 +41,7 @@ const navItems = [
   },
   {
     title: "Community",
-    path: "/community",
+    path: "/",
     subs: [
       {
         title: "Twitter",
@@ -66,11 +67,11 @@ const navItems = [
   },
   {
     title: "Products",
-    path: "/products",
+    path: "/",
     subs: [
       {
         title: "Lend protocol",
-        path: "/",
+        path: "/borrow",
       },
       {
         title: "NFT Marketplace",
@@ -80,7 +81,7 @@ const navItems = [
   },
   {
     title: "Auctions",
-    path: "/auctions",
+    path: "/",
     subs: [
       {
         title: "Health factor alert list",
@@ -134,7 +135,9 @@ const Header = () => {
                           key={i}
                           className="hover:bg-navyBlue px-2 cursor-pointer px-3 py-1"
                         >
-                          {option.title}
+                          <Link href={option.path}>
+                            <span> {option.title}</span>
+                          </Link>
                         </p>
                       ))}
                     </div>
@@ -144,7 +147,14 @@ const Header = () => {
             })}
           </ul>
 
-          <CustomBtn />
+          <div className="flex gap-4 items-center">
+            <Link href="/dashboard">
+              {/* <IoMdContact fontSize={25} /> */}
+              <IoIosContact fontSize={30} />
+            </Link>
+
+            <CustomBtn />
+          </div>
         </div>
       </div>
 
