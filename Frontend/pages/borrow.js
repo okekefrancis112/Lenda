@@ -192,12 +192,12 @@ export default function BorrowPage() {
             placeholder="Number of Days"
             value={requestData.loanCompleteTime}
             onChange={(e) =>
-                setRequestData({
-                  ...requestData,
+              setRequestData({
+                ...requestData,
                 loanCompleteTime: Number(e.target.value),
-            })
-          }
-            />
+              })
+            }
+          />
           {isConnected ? (
             <button
               className="bg-[#7d5bd6] w-full font-bold py-3 rounded-md text-[20px] blur-[0.5px] brightness-125"
