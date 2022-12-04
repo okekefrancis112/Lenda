@@ -84,7 +84,7 @@ export default function DepositPage() {
 
   return (
     <>
-      <div className="min-h-[60vh] mt-10 px-5">
+      <div className="min-h-[70vh] mt-10 px-5">
         <div className="max-w-[500px] mx-auto rounded-md">
           <p className="text-white mb-3 text-2xl font-bold">
             Deposit mMATIC to the pool to earn interest
