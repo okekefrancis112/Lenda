@@ -244,7 +244,7 @@ export default function BorrowPage() {
               className="bg-[#7d5bd6] w-full font-bold py-3 rounded-md text-[20px] blur-[0.5px] brightness-125"
               onClick={(e) => handleBorrow(e)}
             >
-              LEND
+              BORROW
             </button>
           ) : (
             <button

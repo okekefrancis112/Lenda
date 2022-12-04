@@ -86,7 +86,7 @@ export default function DepositPage() {
     <>
       <div className="min-h-[60vh] mt-10 px-5">
         <div className="max-w-[500px] mx-auto rounded-md">
-          <p className="text-white mb-3">
+          <p className="text-white mb-3 text-2xl font-bold">
             Deposit mMATIC to the pool to earn interest
           </p>
           <div className="text-white px-5 py-5 bg-navyBlue mb-2">
