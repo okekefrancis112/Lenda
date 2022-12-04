@@ -13,7 +13,7 @@ async function main() {
   // // Lendpool contract deployment
 
   // const LendPool = await ethers.getContractFactory("LendPool");
-  // const lendpool = await LendPool.deploy(matic.address);
+  // const lendpool = await LendPool.deploy("0x74d68b3c83ED72Da304dc4b7F8A25696CC11411a");
   // await lendpool.deployed();
 
 
@@ -28,20 +28,20 @@ async function main() {
   // console.log(`Yield Contract is deployed to ${yields.address}`);
   // console.log(`Matic contract address is deployed to ${matic.address}`);
 
-  console.log(`Verifying all contracts deployed with on explorer`);
+  // console.log(`Verifying all contracts deployed with on explorer`);
 
-  console.log(`verifying for yield contract`);
+  // console.log(`verifying for yield contract`);
 
-  await run(`verify:verify`, {
-    address: "0x3B6871FC9BfBf0b53eB7f4FDC78059b54c4e0525",
-    constructorArguments: ["0x5e3886c7fbc5e06B1506357108cF8888d07B41a2"],
-    contract: "contracts/utils/yield.sol:YieldContract"
-  })
+  // await run(`verify:verify`, {
+  //   address: "0x3B6871FC9BfBf0b53eB7f4FDC78059b54c4e0525",
+  //   constructorArguments: ["0x5e3886c7fbc5e06B1506357108cF8888d07B41a2"],
+  //   contract: "contracts/utils/yield.sol:YieldContract"
+  // })
 
   console.log(`verifying for lendpool contract`);
 
   await run(`verify:verify`, {
-    address: "0x5e3886c7fbc5e06B1506357108cF8888d07B41a2",
+    address: "0xd98F2dE9949047bcf5647440f5A1c2114D315e94",
     constructorArguments: ["0x74d68b3c83ED72Da304dc4b7F8A25696CC11411a"],
     contract: "contracts/LendPool.sol:LendPool"
   })
