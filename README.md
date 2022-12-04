@@ -59,10 +59,9 @@ Users of the Lenda protocol which are either the depositors or  borrowers intera
 
 ## Contract Architecture
 
-**We detail the core contracts in the Lenda protocol.**
+**We detailed the core contracts in the Lenda protocol.**
 
-**Architecture Overview**
-
+The core contract is the Lenda pool and which inherits from the LendaReserve Contract, the BMatic contract, collateral storage contract and other token standard importation with some libraries 
 
 
 
