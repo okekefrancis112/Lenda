@@ -26,6 +26,7 @@ contract LendPool is LendaReserve, PriceOracle, BMatic{
   ==================================
 */
   error amountExceeded(string);
+  error alreadyExist(string);
 /**
  *==================================
   ---------- EVENTS ----------------
@@ -61,11 +62,12 @@ contract LendPool is LendaReserve, PriceOracle, BMatic{
 */
 
   mapping(address => Loan) public Loans;
-  IERC721[] supportedTokenAddress;
+  mapping(IERC721 => bool) public supportedNFTAddress;
   uint40 public interestRate;
   uint256 public FACTOR;
   uint256 public totalAmountBorrowed;
   uint256 public amountForLiquidity;
+  uint256 public profitMade;
 
 
 
@@ -107,7 +109,7 @@ contract LendPool is LendaReserve, PriceOracle, BMatic{
     require(!loan._onLoan, "Pay your debt first");
     require((_loanCompleteTime * 1 days) < 30 days, "Can't issue a loan beyond 30 days");
     assert((_loanCompleteTime * 1 days) > block.timestamp);
-    require(checkIfNFTIsAvailable(_tokenAddress), "NFT not supported");
+    require(supportedNFTAddress[_tokenAddress] == true, "NFT no supported");
     if(_amountToBorrow > availableToBorrow(_tokenAddress)) revert amountExceeded("exceeded available to borrow");
     loan.tokenAddress = _tokenAddress;
     loan.tokenId = _tokenId;
@@ -118,7 +120,7 @@ contract LendPool is LendaReserve, PriceOracle, BMatic{
     uint256 payBack = _amountToBorrow + getInterestAccrued;
     loan.amountToRepay = payBack;
     CollateralStorage.depositToStorage(msg.sender, _tokenId, _tokenAddress);
-    // mintBMatic(msg.sender, payBack);
+    mintBMatic(msg.sender, payBack);
     _borrowFromReserve(msg.sender, _amountToBorrow);
     loan._onLoan = true;
 
@@ -137,7 +139,7 @@ contract LendPool is LendaReserve, PriceOracle, BMatic{
     CollateralStorage.withdrawFromStorage(msg.sender, loan.tokenId, loan.tokenAddress);
     burnBMatic(msg.sender, balanceOfBMatic(msg.sender));
     loan._onLoan = false;
-    // uint256 profitMade = loan.amountToRepay - loan.loanAmount;
+    profitMade = loan.amountToRepay - loan.loanAmount;
   }
 
 
@@ -152,26 +154,16 @@ contract LendPool is LendaReserve, PriceOracle, BMatic{
     interest = (_amountToBorrow * interestRate * getDuration)/FACTOR;
   }
 
-  function checkIfNFTIsAvailable(IERC721 _NFTAddress) internal view returns(bool result){
-    for(uint256 i = 0; i < supportedTokenAddress.length; i++){
-      if(supportedTokenAddress[i] == _NFTAddress) {
-        result = true;
-      }else {
-        result = false;
-      }
-    }
+  function getSupportedNFT(IERC721 _NFTAddress) external view returns(bool) {
+    return supportedNFTAddress[_NFTAddress];
+  }
+
+  function setSupportedNFT(IERC721 _NFTAddress) public onlyOwner {
+    if(supportedNFTAddress[_NFTAddress] == true) revert alreadyExist("NFTAddress already exist");
+    supportedNFTAddress[_NFTAddress] = true;
   }
 
 
-  function setSupportedNFT(IERC721 _NFTAddress) public onlyOwner{
-    assert(!checkIfNFTIsAvailable(_NFTAddress));
-    supportedTokenAddress.push(_NFTAddress);
-  }
-
-
-  function getSupportedNFT() external view returns(IERC721[] memory) {
-    return supportedTokenAddress;
-  }
 
   function activeCollection(address _nftContractAddress) external view returns(uint256) {
     return CollateralStorage.valueInReserve(_nftContractAddress);
