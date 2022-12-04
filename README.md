@@ -72,7 +72,7 @@ The core contract is the Lenda pool and which inherits from the LendaReserve Con
 
 This contract holds logic enable NFT owners create a loan, repay a loan
 
-https://mumbai.polygonscan.com/address/0x5e3886c7fbc5e06B1506357108cF8888d07B41a2#code
+https://mumbai.polygonscan.com/address/0xD287cc4B99cA787c0d7F949deD9961531aEda71E#readContract
 
 ### DepositorToken (Lenda)
 
