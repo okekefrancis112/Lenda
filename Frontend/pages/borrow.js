@@ -7,11 +7,14 @@ import {
   useContractWrite,
   useDisconnect,
   useContractRead,
+  useWaitForTransaction,
 } from "wagmi";
 
 import { InjectedConnector } from "wagmi/connectors/injected";
-import { LENDA_CONTRACT } from "../utils/index";
+import { LENDA_CONTRACT, LENDPOOL_ADDRESS } from "../utils/index";
 import axios from "axios";
+import { toast } from "react-toastify";
+import nftAbi from "../utils/abi/nftAbi.json";
 
 const options = [
   { value: "0xB50285433aAda7261A8F518E25128Ee0ED1DFcA2", label: "Azuki" },
@@ -34,6 +37,7 @@ const options = [
 
 export default function BorrowPage() {
   const [selectedOption, setSelectedOption] = useState({});
+  const [availableToBorrow, setAvailableToBorrow] = useState("");
   const [requestData, setRequestData] = useState({
     tokenAddress: "",
     tokenId: "",
@@ -46,6 +50,16 @@ export default function BorrowPage() {
     ...LENDA_CONTRACT,
     functionName: "availableToBorrow",
     args: [selectedOption.value],
+    onSuccess(data) {
+      console.log("skjbjk");
+      toast.success(
+        `${data?.toString() / 1e18} matic available to be borrowed`,
+        {
+          position: toast.POSITION.TOP_CENTER,
+        }
+      );
+      setAvailableToBorrow(Number(data?.toString() / 1e18));
+    },
   });
 
   const { connect } = useConnect({
@@ -69,6 +83,34 @@ export default function BorrowPage() {
     ],
   });
 
+  const {
+    data: approveNftData,
+    isLoading: approveNftLoading,
+    isSuccess: approveSuccess,
+    write: approveNft,
+  } = useContractWrite({
+    mode: "recklesslyUnprepared",
+    address: requestData.tokenAddress,
+    abi: nftAbi,
+    functionName: "setApprovalForAll",
+    args: [LENDPOOL_ADDRESS, true],
+    onSuccess(data) {
+      console.log("it was successful");
+    },
+  });
+
+  console.log(approveNftData, approveNftLoading, approveSuccess);
+
+  const { isLoading: approvalWaitLoading } = useWaitForTransaction({
+    hash: approveNftData?.hash,
+    onSuccess() {
+      writeBorrow();
+    },
+    onError(data) {
+      console.log(data);
+    },
+  });
+
   const fetchTokenId = async () => {
     try {
       const res = await axios.get(
@@ -78,7 +120,9 @@ export default function BorrowPage() {
 
       setRequestData({
         ...requestData,
-        tokenId: Number(res?.data?.ownedNfts[0]?.id?.tokenId),
+        tokenId: res?.data?.ownedNfts[0]?.id?.tokenId
+          ? Number(res?.data?.ownedNfts[0]?.id?.tokenId)
+          : "",
         tokenAddress: selectedOption?.value,
       });
     } catch (err) {
@@ -96,16 +140,22 @@ export default function BorrowPage() {
   console.log(isLoading, isSuccess);
 
   console.log(selectedOption);
+  console.log(availableToBorrow);
 
-  const handleBorrow = async (e) => {
+  const handleBorrow = (e) => {
     e.preventDefault();
     console.log(requestData);
 
-    try {
-      writeBorrow();
-    } catch (err) {
-      console.log(error);
+    if (
+      requestData.tokenAddress !== "" &&
+      requestData.tokenId !== "" &&
+      requestData.loanCompleteTime !== "" &&
+      requestData.amountToBorrow !== ""
+    ) {
+      console.log("complete");
     }
+
+    // approveNft();
   };
 
   console.log(borrowLoanData, borrowLoading, borrowSuccess);
@@ -120,6 +170,9 @@ export default function BorrowPage() {
             onChange={setSelectedOption}
             options={options}
           />
+          <span className="text-white">
+            Available to borrow: {availableToBorrow}
+          </span>
           <input
             type="number"
             className={styles.input}

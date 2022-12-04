@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import React from "react";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
   useContractRead,
@@ -12,12 +12,11 @@ import {
   mMATIC_CONTRACT,
   LENDA_CONTRACT,
   LENDPOOL_ADDRESS,
-  mMATIC_ADDRESS,
 } from "../utils/index";
 
 export default function DepositPage() {
   const [amount, setAmount] = React.useState("");
-  const [loading, setLoading] = React.useState(false);
+  //   const [loading, setLoading] = React.useState(false);
 
   const { address, isDisconnected, isConnected } = useAccount();
 
@@ -26,6 +25,7 @@ export default function DepositPage() {
     isError,
     isSuccess: walletBalSuccess,
     isLoading: loadingWalletBal,
+    refetch: refetchWalletBal,
   } = useContractRead({
     ...mMATIC_CONTRACT,
     functionName: "balanceOf",
@@ -67,35 +67,18 @@ export default function DepositPage() {
     ...LENDA_CONTRACT,
     functionName: "depositFor",
     args: [address, ethers.utils.parseEther(amount ? amount.toString() : "0")],
+    onSuccess() {
+      refetchWalletBal();
+      setAmount(0);
+      toast.success(`${amount} mMATIC Deposited successfully`, {
+        position: toast.POSITION.TOP_CENTER,
+      });
+    },
   });
 
-  console.log(approveTokenData, approvalSuccess);
-
-  //   console.log(walletBalance?.value?.toNumber());
-  //   console.log(walletBalance?.value?.toString());
-  //   console.log(data?.toString());
-  console.log(data, loadingWalletBal, depositSuccess);
-
   const handleDeposit = async () => {
-    // depositMatic();
     approveMatic();
-
-    console.log(amount, address);
-    // try {
-    //   setLoading(loadingDeposit);
-    //   depositMatic();
-    // } catch (err) {
-    //   console.log(err);
-    // } finally {
-    //   setAmount(0);
-    //   toast.success("mMATIC Deposited successfully", {
-    //     position: toast.POSITION.TOP_CENTER,
-    //   });
-    //   setLoading(false);
-    // }
   };
-
-  //   console.log(amount);
 
   return (
     <>
@@ -106,7 +89,7 @@ export default function DepositPage() {
           </p>
           <div className="text-white px-5 py-5 bg-navyBlue mb-2">
             <p>Deposit mMATIC</p>
-            {/* <p>
+            <p>
               Available to deposit :
               <span className="ml-2">
                 {isConnected && loadingWalletBal ? (
@@ -118,7 +101,7 @@ export default function DepositPage() {
                 )}
                 mMATIC
               </span>
-            </p> */}
+            </p>
           </div>
           <div className="text-white px-5 py-5 bg-navyBlue">
             <div className="border border-slate-300 rounded-md px-3 pt-2">
@@ -147,9 +130,17 @@ export default function DepositPage() {
             <button
               className="bg-green py-2 w-full rounded-md mt-5"
               onClick={() => handleDeposit()}
-              disabled={isDisconnected || amount <= 0}
+              disabled={
+                isDisconnected ||
+                amount <= 0 ||
+                approveLoading ||
+                approvalWaitLoading ||
+                loadingDeposit
+              }
             >
-              {loading ? "loading..." : "Deposit"}
+              {approveLoading || approvalWaitLoading || loadingDeposit
+                ? "Loading..."
+                : "Deposit"}
             </button>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import styles from "../../styles/Header.module.css";
 import { FaAngleDown } from "react-icons/fa";
-import { IoMdContact } from "react-icons//io";
+import { IoIosContact } from "react-icons//io";
 import Link from "next/link";
 import { CustomBtn } from "../customBtn/customBtn";
 import { CgClose } from "react-icons/cg";
@@ -19,11 +19,11 @@ const navItems = [
     subs: [
       {
         title: "Deposit Matic",
-        path: "/",
+        path: "/deposit",
       },
       {
         title: "Borrow Matic",
-        path: "/",
+        path: "/borrow",
       },
       {
         title: "Buy NFT",
@@ -71,7 +71,7 @@ const navItems = [
     subs: [
       {
         title: "Lend protocol",
-        path: "/",
+        path: "/borrow",
       },
       {
         title: "NFT Marketplace",
@@ -131,12 +131,14 @@ const Header = () => {
                       className={`flex flex-col absolute bg-[#7e5bd6] py-2 rounded-md min-w-[170px] hidden z-10 ${styles.navDropdown}`}
                     >
                       {item.subs.map((option, i) => (
-                        <p
-                          key={i}
-                          className="hover:bg-navyBlue px-2 cursor-pointer px-3 py-1"
-                        >
-                          {option.title}
-                        </p>
+                        <Link href={option.path}>
+                          <p
+                            key={i}
+                            className="hover:bg-navyBlue px-2 cursor-pointer px-3 py-1"
+                          >
+                            {option.title}
+                          </p>
+                        </Link>
                       ))}
                     </div>
                   )}
@@ -145,9 +147,10 @@ const Header = () => {
             })}
           </ul>
 
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-4 items-center">
             <Link href="/dashboard">
-              <IoMdContact fontSize={25} />
+              {/* <IoMdContact fontSize={25} /> */}
+              <IoIosContact fontSize={30} />
             </Link>
 
             <CustomBtn />
