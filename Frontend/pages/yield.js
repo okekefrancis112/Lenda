@@ -6,11 +6,11 @@ import {
   useConnect,
   useContractWrite,
   useDisconnect,
-  useContractRead, useWaitForTransaction,
+  useContractRead, useWaitForTransaction, usePrepareContractWrite,
 } from "wagmi";
 
 import { InjectedConnector } from "wagmi/connectors/injected";
-import {YIELD_ADDRESS} from "../utils/index";
+import {YIELD_ADDRESS, YIELDCONTRACT_ADDRESS} from "../utils/index";
 import axios from "axios";
 import {ethers} from "ethers";
 
@@ -22,41 +22,48 @@ export default function Yield() {
   const [loading, setLoading]  = useState()
   const { address, isDisconnected, isConnected } = useAccount()
 
-  const {
-    data: lockDtoken,
-    isError,
-    isSuccess: lockDtokenSuccess,
-    isLoading: loadinglockDtoken,
-      write: lockDmatic
-  } = useContractWrite({
-    mode: "recklesslyUnprepared",
-    ...YIELD_ADDRESS,
-    functionName: "lockDTokenForLND",
-    args: [tokenAmount, lockDays],
+  const { lockConfig } = usePrepareContractWrite(
+      {
+        addressOrName: YIELD_ADDRESS.address,
+        contractInterface: YIELD_ADDRESS.abi,
+        functionName: "lockDTokenForLND",
+        args: [tokenAmount, lockDays],
+      }
+  )
+
+  const {data, isLoading, isSuccess, write: lockDmatic} = useContractWrite({
+    lockConfig
   });
 
-  const {
-    data,
-    isSuccess,
-    isLoading,
-    write: withdrawToken
-  } = useContractWrite({
-        mode: "recklesslyUnprepared",
-        ...YIELD_ADDRESS,
-        functionName: "withdrawLockedToken",
-        args:[]
-      }
-
-  )
+  // const {
+  //   data,
+  //   isSuccess,
+  //   isLoading,
+  //   write: withdrawToken
+  // } = useContractWrite({
+  //       mode: "recklesslyUnprepared",
+  //       ...YIELD_ADDRESS,
+  //       functionName: "withdrawLockedToken",
+  //       args:[]
+  //     }
+  //
+  // )
 
   // const { isLoading: lockDtokenLoading } = useWaitForTransaction(
   //     hash: lockDtoken?.hash,
   //     onSuccess()
   // )
 
-  // const handleLock = async () =>{
-  //   lockDmatic()
-  // }
+  const handleLock = async () =>{
+    try{
+      setLoading(true)
+      lockDmatic()
+    }catch (e) {
+      console.log(e)
+    }finally {
+      setTokenAmount(0)
+    }
+  }
 
   return (
     <div>
@@ -110,41 +117,43 @@ export default function Yield() {
                     </span>
                     </button>
                   </div>
-                  <form className={styles.form}>
-                    {/*body*/}
-                    <div className="relative p-6 flex-auto">
-                      <input
-                          className={styles.input}
-                          placeholder="Amount"
-                          value={tokenAmount}
-                          onChange={(e) => setTokenAmount(e.target.value)}
-                      />
-                      <input
-                          className={styles.input}
-                          placeholder="No of Days"
-                          value={lockDays}
-                          onChange={(e) => setLockDays(e.target.value)}
-                      />
-                    </div>
-                    {/*footer*/}
-                    <div className="flex items-center justify-end p-6 border-t border-solid border-slate-200 rounded-b">
-                      <button
-                          className="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                          type="button"
-                          onClick={() => lockDmatic?.()}
-                      >
-                        Lock Token
-                      </button>
+                  {isConnected ?
+                      (<form className={styles.form}>
+                        {/*body*/}
+                        <div className="relative p-6 flex-auto">
+                          <input
+                              className={styles.input}
+                              placeholder="Amount"
+                              value={tokenAmount}
+                              onChange={(e) => setTokenAmount(e.target.value)}
+                          />
+                          <input
+                              className={styles.input}
+                              placeholder="No of Days"
+                              value={lockDays}
+                              onChange={(e) => setLockDays(e.target.value)}
+                          />
+                        </div>
+                        {/*footer*/}
+                        <div className="flex items-center justify-end p-6 border-t border-solid border-slate-200 rounded-b">
+                          <button
+                              className="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                              type="button"
+                              onClick={() => handleLock()}
+                          >
+                            Lock Token
+                          </button>
 
-                      <button
-                          className="bg-amber-700 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                          type="button"
-                          onClick={() => withdrawToken?.()}
-                      >
-                        Withdraw Token
-                      </button>
-                    </div>
-                  </form>
+                          <button
+                              className="bg-amber-700 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                              type="button"
+                              onClick={() => withdrawToken?.()}
+                          >
+                            Withdraw Token
+                          </button>
+                        </div>
+                      </form>) : null
+                  }
                 </div>
               </div>
             </div>
