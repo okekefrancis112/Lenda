@@ -37,7 +37,7 @@ export default function Home() {
                   Deposit
                 </button>
                 <button
-                  className="bg-[#7e5bd6] py-2 px-20"
+                  className="bg-[#7e5bd6] py-4 px-20"
                   onClick={() => router.push("/borrow")}
                 >
                   Borrow

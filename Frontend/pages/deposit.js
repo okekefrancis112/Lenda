@@ -65,8 +65,8 @@ export default function DepositPage() {
   } = useContractWrite({
     mode: "recklesslyUnprepared",
     ...LENDA_CONTRACT,
-    functionName: "depositFor",
-    args: [address, ethers.utils.parseEther(amount ? amount.toString() : "0")],
+    functionName: "deposit",
+    args: [ethers.utils.parseEther(amount ? amount.toString() : "0"), address],
     onSuccess() {
       setAmount(0);
       toast.success(`${amount} mMATIC Deposited successfully`, {
@@ -84,7 +84,7 @@ export default function DepositPage() {
 
   return (
     <>
-      <div className="min-h-[60vh] mt-10">
+      <div className="min-h-[60vh] mt-10 px-5">
         <div className="max-w-[500px] mx-auto rounded-md">
           <p className="text-white mb-3">
             Deposit mMATIC to the pool to earn interest
