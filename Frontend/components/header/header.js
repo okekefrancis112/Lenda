@@ -131,14 +131,14 @@ const Header = () => {
                       className={`flex flex-col absolute bg-[#7e5bd6] py-2 rounded-md min-w-[170px] hidden z-10 ${styles.navDropdown}`}
                     >
                       {item.subs.map((option, i) => (
-                        <Link href={option.path}>
-                          <p
-                            key={i}
-                            className="hover:bg-navyBlue px-2 cursor-pointer px-3 py-1"
-                          >
-                            {option.title}
-                          </p>
-                        </Link>
+                        <p
+                          key={i}
+                          className="hover:bg-navyBlue px-2 cursor-pointer px-3 py-1"
+                        >
+                          <Link href={option.path}>
+                            <span> {option.title}</span>
+                          </Link>
+                        </p>
                       ))}
                     </div>
                   )}

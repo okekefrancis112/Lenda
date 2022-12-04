@@ -153,6 +153,7 @@ export default function BorrowPage() {
       requestData.amountToBorrow !== ""
     ) {
       console.log("complete");
+      approveNft();
     }
 
     // approveNft();

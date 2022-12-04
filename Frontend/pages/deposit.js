@@ -68,17 +68,19 @@ export default function DepositPage() {
     functionName: "depositFor",
     args: [address, ethers.utils.parseEther(amount ? amount.toString() : "0")],
     onSuccess() {
-      refetchWalletBal();
       setAmount(0);
       toast.success(`${amount} mMATIC Deposited successfully`, {
         position: toast.POSITION.TOP_CENTER,
       });
+      refetchWalletBal();
     },
   });
 
   const handleDeposit = async () => {
     approveMatic();
   };
+
+  //   console.log(amount);
 
   return (
     <>
